@@ -40,3 +40,10 @@ git clone https://github.com/<your-team-name>/alias-game.git
 cd alias-game
 
 ```
+### 2. **Copy the example file and update it with your values:**
+    ```bash
+    cp .env.example .env
+    ```
+### 3. **Create and run containers with docker (MongoDB + App)**
+    ```bash
+    docker-compose up --build
