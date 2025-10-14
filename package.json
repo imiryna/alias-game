@@ -4,14 +4,20 @@
   "description": "multiplayer word-guessing game",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "npx eslint .",
+    "test": "jest",
+    "start": "node ./server.js",
+    "start:dev": "nodemon ./server.js"
   },
   "keywords": [],
   "author": "Team 01",
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^9.37.0",
     "dotenv": "^17.2.3",
+    "eslint": "^9.37.0",
     "express": "^5.1.0",
+    "globals": "^16.4.0",
     "nodemon": "^3.1.10"
   },
   "dependencies": {
