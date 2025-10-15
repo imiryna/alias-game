@@ -1,9 +1,11 @@
-const UsersModel = require("./userModel");
+const UserModel = require("./userModel");
 const GameModel = require("./gameModel");
 const ChatModel = require("./chatModel");
+const TeamModel = require("./teamModel");
 
 module.exports = {
-  UsersModel,
+  UserModel,
   GameModel,
   ChatModel,
+  TeamModel,
 };
