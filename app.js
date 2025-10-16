@@ -1,13 +1,15 @@
 const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
-// const mongoose = require("mongoose");
 
 const app = express();
 
-app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(logger('dev'));
+}
 
 // app.use("/api", routerApi);
 
