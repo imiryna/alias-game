@@ -18,11 +18,6 @@ const chatSchema = new Schema(
         timestamp: { type: Date, default: Date.now },
       },
     ],
-    explainer: {
-      type: Schema.Types.ObjectId,
-      ref: "User", // the player currently explaining the word
-      required: false,
-    },
   },
   { timestamps: true } // adds createdAt and updatedAt automatically
 );
