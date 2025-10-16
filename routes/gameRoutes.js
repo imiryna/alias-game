@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
+
+const { authMiddleware } = require("../middleware");
 const gameController = require("../controllers/gameController");
 
 router.post("/", authMiddleware, gameController.createGame);

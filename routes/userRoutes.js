@@ -8,7 +8,7 @@ const {
   deleteUser,
 } = require("../controllers/userController");
 
-const authMiddleware = require("../middlewares/authMiddleware.js");
+const { authMiddleware } = require("../middleware");
 
 router.get("/", authMiddleware, getAllUsers);
 router.get("/:id", authMiddleware, getUserById);

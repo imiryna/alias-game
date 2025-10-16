@@ -1,6 +1,9 @@
-const { checkSignupData, authMiddleware } = require("./authMiddleware");
+const authMiddleware = require("./authMiddleware");
+const validateAuth = require("./validateAuth");
+const validateUser = require("./validateUser");
 
 module.exports = {
-  checkSignupData,
   authMiddleware,
+  validateAuth,
+  validateUser,
 };
