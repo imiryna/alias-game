@@ -1,4 +1,4 @@
-const { checkSignupData } = require("./authMiddleware");
+const { checkSignupData, authMiddleware } = require("./authMiddleware");
 
 module.exports = {
   checkSignupData,
