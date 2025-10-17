@@ -1,9 +1,11 @@
 const { chooseNextExplainer } = require("./teamService");
 const { createGame, endRound, startRound } = require("./gameService");
+const { checkUserExists } = require("./authService");
 
 module.exports = {
-    chooseNextExplainer,
-    createGame,
-    startRound,
-    endRound,
-}
+  checkUserExists,
+  chooseNextExplainer,
+  createGame,
+  startRound,
+  endRound,
+};

@@ -18,6 +18,10 @@ const userSchema = new Schema({
     type: Number,
     default: 0,
   },
+  token: {
+    type: String,
+    default: null,
+  },
 });
 
 const UserModel = model("user", userSchema);

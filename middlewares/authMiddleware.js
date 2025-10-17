@@ -1,10 +1,16 @@
-/*exports.checkSignupData = async (req, res, next) => {
-  
-};*/
+const { checkUserExists } = require("../services");
+const { catchAsync, HttpError } = require("../utils");
+const { signupAuthDataValidator } = require("./validateAuth");
 
-exports.authMiddleware = (req, res, next) => {
-  console.log("⚠️ authMiddleware placeholder: JWT verification logic not implemented yet!");
-  
+exports.checkSignupData = catchAsync(async (req, res, next) => {
+  const { value, error } = signupAuthDataValidator.validate(req.body);
+
+  if (error) {
+    throw new HttpError(400, "Invalid user data..", error);
+  }
+  await checkUserExists({ email: value.email });
+
+  req.body = value;
+
   next();
-};
-
+});

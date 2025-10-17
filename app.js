@@ -29,7 +29,7 @@ app.use((_, res) => {
 });
 
 app.use((err, _, res) => {
-  res.status(err.status).json({ message: err.message });
+  res.status(err.status || 500).json({ message: err.message });
 });
 
 module.exports = app;
