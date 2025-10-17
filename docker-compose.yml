@@ -24,7 +24,7 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin
+      - MONGO_URI=${MONGO_URL}
 
 volumes:
   mongo_data:
