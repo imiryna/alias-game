@@ -1,12 +1,13 @@
 const { UserModel } = require("../models/");
+const { HttpError } = require("../utils");
 
 // to get all users list
-const getAllUsers = async () => {
+exports.getAllUsers = async () => {
   return await UserModel.find({}, "-passwordHash");
 };
 
 // to get a user by id
-const getUserById = async (id) => {
+exports.getUserById = async (id) => {
   return await UserModel.findById(id, "-passwordHash");
 };
 
@@ -16,7 +17,7 @@ const getUserById = async (id) => {
 };*/
 
 // to update user stats
-const updateUserStats = async (id, statsData) => {
+exports.updateUserStats = async (id, statsData) => {
   const { gamesPlayed, wins } = statsData;
 
   const user = await UserModel.findById(id);
@@ -33,14 +34,12 @@ const updateUserStats = async (id, statsData) => {
 };
 
 // to delete a user
-const deleteUser = async (id) => {
+exports.deleteUser = async (id) => {
   return await UserModel.findByIdAndDelete(id);
 };
 
-module.exports = {
-  getAllUsers,
-  getUserById,
-  //createUser,
-  updateUserStats,
-  deleteUser,
+exports.checkUserExists = async (filter) => {
+  const userExist = await UserModel.exists(filter);
+
+  if (userExist) throw new HttpError(409, "Email in use");
 };
