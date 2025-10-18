@@ -12,4 +12,4 @@ function getNextExplainer(players, currentIndex) {
     return { nextExplainer, nextIndex };
 }
 
-module.exports = { getNextExplainer };
+module.exports = getNextExplainer;

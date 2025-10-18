@@ -1,4 +1,4 @@
-const { getNextExplainer } = require('../utils/teamRoundRobin');
+const { getNextExplainer } = require('../utils');
 const Team = require('../models/TeamModel');
 
 async function chooseNextExplainer(teamId) {

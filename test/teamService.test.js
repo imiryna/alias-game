@@ -49,7 +49,7 @@ describe("chooseNextExplainer service", () => {
             expect(populated.currentExplainer).toBeDefined();
             seenOrder.push(populated.currentExplainer.name);
 
-            console.log(`🔁 Round ${i + 1}: ${populated.currentExplainer.name}`);
+            console.log(`Round ${i + 1}: ${populated.currentExplainer.name}`);
         }
 
         expect(seenOrder.slice(0, 3)).toEqual(expectedOrder);

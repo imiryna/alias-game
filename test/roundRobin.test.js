@@ -1,7 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const Team = require("./../models/TeamModel");
-const { getNextExplainer } = require("./../utils/teamRoundRobin");
+const { getNextExplainer } = require("./../utils");
 
 beforeAll(async () => {
     await mongoose.connect(process.env.MONGO_URL, {
