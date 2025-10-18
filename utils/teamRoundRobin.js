@@ -1,14 +1,15 @@
-function getNextExplainer(playerList, currentIndex) {
-    if (!playerList || playerList.length === 0) return null;
+function getNextExplainer(players, currentIndex) {
+    if (!players || players.length === 0) {
+        throw new Error("No players in team");
+    }
 
-    const validIndex = typeof currentIndex === 'number' && currentIndex >= 0
-        ? currentIndex
-        : -1;
+    const validIndex = typeof currentIndex === "number" ? currentIndex : -1;
+    const nextIndex = (validIndex + 1) % players.length;
+    const next = players[nextIndex];
 
-    const nextIndex = (validIndex + 1) % playerList.length;
-    const nextPlayerId = playerList[nextIndex];
+    const nextExplainer = typeof next === "object" && next._id ? next : { _id: next };
 
-    return { nextIndex, nextPlayerId };
+    return { nextExplainer, nextIndex };
 }
 
 module.exports = { getNextExplainer };

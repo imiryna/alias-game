@@ -35,23 +35,27 @@ describe("Round Robin simulation", () => {
         const rounds = 6;
 
         for (let i = 0; i < rounds; i++) {
-            const { nextIndex, nextPlayerId } = getNextExplainer(
+            const { nextIndex, nextExplainer } = getNextExplainer(
                 team.player_list,
                 team.currentExplainerIndex
             );
 
-            expect(nextPlayerId).toBeDefined();
+            expect(nextExplainer).toBeDefined();
             expect(typeof nextIndex).toBe("number");
 
-            console.log(`Round ${i + 1}: Index = ${nextIndex}, Player ID = ${nextPlayerId.toString()}`);
+            console.log(
+                `Round ${i + 1}: Index = ${nextIndex}, Player ID = ${nextExplainer._id?.toString() || nextExplainer.toString()}`
+            );
 
-            team.currentExplainer = nextPlayerId;
+            team.currentExplainer = nextExplainer._id || nextExplainer;
             team.currentExplainerIndex = nextIndex;
 
             await team.save();
         }
 
         expect(team.currentExplainerIndex).toBeLessThan(team.player_list.length);
-        expect(team.currentExplainer).toEqual(team.player_list[team.currentExplainerIndex]);
+        expect(team.currentExplainer.toString()).toEqual(
+            team.player_list[team.currentExplainerIndex].toString()
+        );
     });
 });

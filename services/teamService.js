@@ -5,7 +5,10 @@ async function chooseNextExplainer(teamId) {
     const team = await Team.findById(teamId).populate('player_list');
     if (!team) throw new Error("Team not found");
 
-    const { nextExplainer, nextIndex } = getNextExplainer(team.player_list, team.currentExplainerIndex);
+    const { nextExplainer, nextIndex } = getNextExplainer(
+        team.player_list,
+        team.currentExplainerIndex
+    );
 
     team.currentExplainer = nextExplainer._id;
     team.currentExplainerIndex = nextIndex;
@@ -14,6 +17,4 @@ async function chooseNextExplainer(teamId) {
     return team;
 }
 
-module.exports = {
-    chooseNextExplainer,
-};
+module.exports = { chooseNextExplainer };
