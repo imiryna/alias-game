@@ -24,7 +24,9 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGO_URI=${MONGO_URL}
+      - MONGO_URL=${MONGO_URL}
+      - PORT=${PORT}
+      - NODE_ENV=${NODE_ENV}
 
 volumes:
   mongo_data:
