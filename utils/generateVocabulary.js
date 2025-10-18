@@ -17,4 +17,4 @@ function generateVocabulary(roundAmount = 10) {
     return uniqueWords.slice(0, totalWords);
 }
 
-module.exports = { generateVocabulary };
+module.exports = generateVocabulary;

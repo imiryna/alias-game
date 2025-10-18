@@ -1,4 +1,4 @@
-const { generateVocabulary } = require("../utils/generateVocabulary");
+const { generateVocabulary } = require("../utils");
 
 describe("generateVocabulary utility", () => {
     test("should return unique lowercase nouns", () => {
