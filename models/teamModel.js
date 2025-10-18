@@ -17,6 +17,6 @@ const teamSchema = new Schema({
   },
 });
 
-const TeamModel = model("game", teamSchema);
+const TeamModel = model("team", teamSchema);
 
 module.exports = TeamModel;
