@@ -5,6 +5,10 @@ const teamSchema = new Schema({
     type: String,
     required: true,
   },
+  game: { 
+    type: Schema.Types.ObjectId,
+    ref: "game" 
+  },
   player_list: [
     {
       type: Schema.Types.ObjectId,
