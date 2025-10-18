@@ -1,38 +1,34 @@
 const ChatModel = require("../models/chatModel");
+const { catchAsync, HttpError } = require("../utils");
 
-exports.getChatByTeam = async (req, res) => {
-  try {
-    const { teamId } = req.params;
+// to get chat by team ID
+exports.getChatByTeam = catchAsync(async (req, res) => {
+  const { teamId } = req.params;
 
-    const chat = await ChatModel.findOne({ team_id: teamId })
-      .populate("messages.user", "username email")
-      .populate("explainer", "username email");
+  const chat = await ChatModel.findOne({ team_id: teamId })
+    .populate("messages.user", "username email")
+    .populate("explainer", "username email");
 
-    if (!chat) {
-      return res.status(404).json({ message: "Chat not found for this team" });
-    }
-
-    res.status(200).json(chat);
-  } catch (error) {
-    console.error("❌ Error fetching chat:", error);
-    res.status(500).json({ message: "Server error while fetching chat" });
+  if (!chat) {
+    throw new HttpError(404, "Chat not found for this team");
   }
-};
 
-exports.createChatForTeam = async (req, res) => {
-  try {
-    const { teamId } = req.params;
+  res.status(200).json(chat);
+});
 
-    const existingChat = await ChatModel.findOne({ team_id: teamId });
-    if (existingChat) {
-      return res.status(400).json({ message: "Chat for this team already exists" });
-    }
+// to create chat for a team
+exports.createChatForTeam = catchAsync(async (req, res) => {
+  const { teamId } = req.params;
 
-    const chat = await ChatModel.create({ team_id: teamId, messages: [] });
-
-    res.status(201).json({ message: "Chat created", chat });
-  } catch (error) {
-    console.error("❌ Error creating chat:", error);
-    res.status(500).json({ message: "Server error while creating chat" });
+  const existingChat = await ChatModel.findOne({ team_id: teamId });
+  if (existingChat) {
+    throw new HttpError(400, "Chat for this team already exists");
   }
-};
+
+  const chat = await ChatModel.create({ team_id: teamId, messages: [] });
+
+  res.status(201).json({
+    message: "Chat created",
+    chat,
+  });
+});

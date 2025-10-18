@@ -1,104 +1,86 @@
 const GameModel = require("../models/gameModel");
+const { catchAsync, HttpError } = require("../utils");
 
-exports.createGame = async (req, res) => {
-  try {
-    const { name, settings, word_vocabulary } = req.body;
-    const admin = req.user._id;
-    if (!name) {
-      return res.status(400).json({ message: "Game name is required" });
-    }
+// to create a new game
+exports.createGame = catchAsync(async (req, res) => {
+  const { name, settings, word_vocabulary } = req.body;
+  const admin = req.user?._id;
 
-    const newGame = await GameModel.create({
-      name,
-      admin,
-      settings: settings || {},
-      word_vocabulary: word_vocabulary || [],
-    });
-
-    res.status(201).json({
-      message: "Game created successfully",
-      game: newGame,
-    });
-  } catch (error) {
-    console.error("❌ Error creating game:", error);
-    res.status(500).json({ message: "Server error while creating game" });
+  if (!name) {
+    throw new HttpError(400, "Game name is required");
   }
-};
 
+  const newGame = await GameModel.create({
+    name,
+    admin,
+    settings: settings || {},
+    word_vocabulary: word_vocabulary || [],
+  });
 
-exports.getAllGames = async (_req, res) => {
-  try {
-    const games = await GameModel.find()
-      .populate("admin", "username email")
-      .populate("teams", "name team_score player_list");
+  res.status(201).json({
+    message: "Game created successfully",
+    game: newGame,
+  });
+});
 
-    res.status(200).json(games);
-  } catch (error) {
-    console.error("❌ Error fetching games:", error);
-    res.status(500).json({ message: "Server error while fetching games" });
+// to get all games
+exports.getAllGames = catchAsync(async (_req, res) => {
+  const games = await GameModel.find()
+    .populate("admin", "username email")
+    .populate("teams", "name team_score player_list");
+
+  res.status(200).json(games);
+});
+
+// to get a game by id
+exports.getGameById = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const game = await GameModel.findById(id)
+    .populate("admin", "username email")
+    .populate("teams", "name team_score player_list");
+
+  if (!game) {
+    throw new HttpError(404, "Game not found");
   }
-};
 
-exports.getGameById = async (req, res) => {
-  try {
-    const { id } = req.params;
+  res.status(200).json(game);
+});
 
-    const game = await GameModel.findById(id)
-      .populate("admin", "username email")
-      .populate("teams", "name team_score player_list");
+// to update a game
+exports.updateGame = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
 
-    if (!game) {
-      return res.status(404).json({ message: "Game not found" });
-    }
+  const updatedGame = await GameModel.findByIdAndUpdate(id, updates, {
+    new: true,
+    runValidators: true,
+  })
+    .populate("admin", "username email")
+    .populate("teams", "name team_score player_list");
 
-    res.status(200).json(game);
-  } catch (error) {
-    console.error("❌ Error fetching game:", error);
-    res.status(500).json({ message: "Server error while fetching game" });
+  if (!updatedGame) {
+    throw new HttpError(404, "Game not found");
   }
-};
 
-exports.updateGame = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = req.body;
+  res.status(200).json({
+    message: "Game updated successfully",
+    game: updatedGame,
+  });
+});
 
-    const updatedGame = await GameModel.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    })
-      .populate("admin", "username email")
-      .populate("teams", "name team_score player_list");
+// to delete a game
+exports.deleteGame = catchAsync(async (req, res) => {
+  const { id } = req.params;
 
-    if (!updatedGame) {
-      return res.status(404).json({ message: "Game not found" });
-    }
+  const deletedGame = await GameModel.findByIdAndDelete(id);
 
-    res.status(200).json({
-      message: "Game updated successfully",
-      game: updatedGame,
-    });
-  } catch (error) {
-    console.error("❌ Error updating game:", error);
-    res.status(500).json({ message: "Server error while updating game" });
+  if (!deletedGame) {
+    throw new HttpError(404, "Game not found");
   }
-};
 
-exports.deleteGame = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedGame = await GameModel.findByIdAndDelete(id);
-
-    if (!deletedGame) {
-      return res.status(404).json({ message: "Game not found" });
-    }
-
-    res.status(200).json({
-      message: "Game deleted successfully",
-      game: deletedGame,
-    });
-  } catch (error) {
-    console.error("❌ Error deleting game:", error);
-    res.status(500).json({ message: "Server error while deleting game" });
-  }
-};
+  res.status(200).json({
+    message: "Game deleted successfully",
+    game: deletedGame,
+  });
+});

@@ -1,64 +1,71 @@
-const User = require("../models/userModel.js");
+const userService = require("../services/userService");
+const { catchAsync, HttpError } = require("../utils");
 
-const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find({}, "-passwordHash");
-    res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to get users", error: error.message });
+// to get all users
+const getAllUsers = catchAsync(async (req, res) => {
+  const users = await userService.getAllUsers();
+  res.status(200).json(users);
+});
+
+// to get a user by id
+const getUserById = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.params.id);
+
+  if (!user) {
+    throw new HttpError(404, "User not found");
   }
-};
 
-const getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id, "-passwordHash");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to get user", error: error.message });
+  res.status(200).json(user);
+});
+
+// to create a new user
+/*const createUser = catchAsync(async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    throw new HttpError(400, "All fields are required");
   }
-};
 
-const updateUserStats = async (req, res) => {
-  try {
-    const { gamesPlayed, wins } = req.body;
+  const newUser = await userService.createUser({ username, email, password });
 
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  res.status(201).json({
+    message: "User created successfully",
+    user: newUser,
+  });
+});*/
 
-    if (gamesPlayed !== undefined) user.stat.gamesPlayed = gamesPlayed;
-    if (wins !== undefined) user.stat.wins = wins;
+// to update user stats
+const updateUserStats = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { gamesPlayed, wins } = req.body;
 
-    await user.save();
+  const updatedStats = await userService.updateUserStats(id, { gamesPlayed, wins });
 
-    res.status(200).json({
-      message: "User stats updated successfully",
-      stats: user.stat,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update stats", error: error.message });
+  if (!updatedStats) {
+    throw new HttpError(404, "User not found");
   }
-};
 
-const deleteUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete user", error: error.message });
+  res.status(200).json({
+    message: "User stats updated successfully",
+    stats: updatedStats,
+  });
+});
+
+// to delete a user
+const deleteUser = catchAsync(async (req, res) => {
+  const user = await userService.deleteUser(req.params.id);
+
+  if (!user) {
+    throw new HttpError(404, "User not found");
   }
-};
+
+  res.status(200).json({ message: "User deleted successfully" });
+});
 
 module.exports = {
   getAllUsers,
   getUserById,
+  //createUser,
   updateUserStats,
   deleteUser,
 };
