@@ -2,7 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const User = require("../models/UserModel");
 const Team = require("../models/TeamModel");
-const { chooseNextExplainer } = require("../services/teamService");
+const { chooseNextExplainer } = require("../services");
 
 beforeAll(async () => {
     await mongoose.connect(process.env.MONGO_URL, {
