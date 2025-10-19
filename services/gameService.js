@@ -1,6 +1,6 @@
 const GameModel = require("../models/gameModel");
 const { generateVocabulary, pickRandomWord, HttpError} = require("../utils");
-const {StatusCodes} = require("http-status-codes");
+const { StatusCodes } = require("http-status-codes");
 
 /**
  * Create a new game
@@ -10,20 +10,20 @@ const {StatusCodes} = require("http-status-codes");
  * @param settings
  * @returns {Promise<*>}
  */
-async function createGame({ name, adminId, settings = {}}) {
+exports.createGame = async ({ name, adminId, settings = {} }) => {
     if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
 
     const wordAmount = settings.word_amount || 10;
-    let vocabulary = generateVocabulary(wordAmount);
+    const vocabulary = generateVocabulary(wordAmount);
 
     return await GameModel.create({
         name,
         admin: adminId,
-        settings: { ...settings, word_amount: settings.word_amount || 10 },
+        settings: { ...settings, word_amount: wordAmount },
         word_vocabulary: vocabulary,
         current_round: { number: 1, is_active: false },
     });
-}
+};
 
 /**
  * Start a new round
@@ -32,12 +32,12 @@ async function createGame({ name, adminId, settings = {}}) {
  * @param activeTeamId
  * @returns {Promise<{word_vocabulary}|*>}
  */
-async function startRound(gameId, activeTeamId) {
+exports.startRound = async (gameId, activeTeamId) => {
     const game = await GameModel.findById(gameId);
-    if (!game) throw new Error("Game not found");
+    if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
     if (!game.word_vocabulary || game.word_vocabulary.length === 0) {
-        throw new Error("No words left in vocabulary");
+        throw new HttpError(StatusCodes.NO_CONTENT, "No words left in vocabulary");
     }
 
     const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
@@ -54,7 +54,7 @@ async function startRound(gameId, activeTeamId) {
     await game.save();
 
     return game;
-}
+};
 
 /**
  * End the current round
@@ -62,9 +62,9 @@ async function startRound(gameId, activeTeamId) {
  * @param gameId
  * @returns {Promise<*>}
  */
-async function endRound(gameId) {
+exports.endRound = async (gameId) => {
     const game = await GameModel.findById(gameId);
-    if (!game) throw new Error("Game not found");
+    if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
     game.current_round.is_active = false;
     game.current_round.current_word = null;
@@ -73,10 +73,4 @@ async function endRound(gameId) {
 
     await game.save();
     return game;
-}
-
-module.exports = {
-    createGame,
-    startRound,
-    endRound,
 };
