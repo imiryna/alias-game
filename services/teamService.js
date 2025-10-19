@@ -1,9 +1,16 @@
-const { getNextExplainer } = require('../utils');
+const { getNextExplainer, HttpError } = require('../utils');
 const Team = require('../models/TeamModel');
+const { StatusCodes } = require("http-status-codes");
 
-async function chooseNextExplainer(teamId) {
-    const team = await Team.findById(teamId).populate('player_list');
-    if (!team) throw new Error("Team not found");
+/**
+ * Chooses the next explainer for the team using round-robin selection.
+ *
+ * * @param {string} teamId
+ *  * @returns {Promise<*>}
+ */
+exports.chooseNextExplainer = async (teamId) => {
+    const team = await Team.findById(teamId).populate("player_list");
+    if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
 
     const { nextExplainer, nextIndex } = getNextExplainer(
         team.player_list,
@@ -15,6 +22,4 @@ async function chooseNextExplainer(teamId) {
 
     await team.save();
     return team;
-}
-
-module.exports = { chooseNextExplainer };
+};

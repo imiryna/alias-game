@@ -1,3 +1,5 @@
+const { HttpError } = require('../utils');
+const { StatusCodes } = require("http-status-codes");
 const randomWords = require("random-words");
 
 /**
@@ -5,9 +7,9 @@ const randomWords = require("random-words");
  * @param roundAmount {number} - game.settings.word_amount
  * @returns {any[]}
  */
-function generateVocabulary(roundAmount = 10) {
+exports.generateVocabulary = (roundAmount = 10) => {
     if (typeof roundAmount !== "number" || roundAmount <= 0) {
-        throw new Error("Invalid round amount");
+        throw new HttpError(StatusCodes.BAD_REQUEST, "Invalid round amount");
     }
 
     const totalWords = roundAmount * 2;
@@ -15,6 +17,4 @@ function generateVocabulary(roundAmount = 10) {
     const uniqueWords = [...new Set(words.map((w) => w.toLowerCase()))];
 
     return uniqueWords.slice(0, totalWords);
-}
-
-module.exports = generateVocabulary;
+};
