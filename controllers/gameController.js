@@ -86,29 +86,21 @@ exports.deleteGame = catchAsync(async (req, res) => {
 exports.startRound = catchAsync(async (req, res) => {
   const { gameId, teamId } = req.body;
 
-  try {
-    const game = await gameService.startRound(gameId, teamId);
-    res.status(StatusCodes.OK).json({
-      message: "Round started",
-      currentRound: game.current_round,
-      remainingVocabulary: game.word_vocabulary,
-    });
-  } catch (err) {
-    throw new HttpError(StatusCodes.BAD_REQUEST, err.message);
-  }
+  const game = await gameService.startRound(gameId, teamId);
+  res.status(StatusCodes.OK).json({
+    message: "Round started",
+    currentRound: game.current_round,
+    remainingVocabulary: game.word_vocabulary,
+  });
 });
 
 // end the current round
 exports.endRound = catchAsync(async (req, res) => {
   const { gameId } = req.body;
 
-  try {
-    const game = await gameService.endRound(gameId);
-    res.status(StatusCodes.OK).json({
-      message: "Round ended",
-      currentRound: game.current_round,
-    });
-  } catch (err) {
-    throw new HttpError(StatusCodes.BAD_REQUEST, err.message);
-  }
+  const game = await gameService.endRound(gameId);
+  res.status(StatusCodes.OK).json({
+    message: "Round ended",
+    currentRound: game.current_round,
+  });
 });
