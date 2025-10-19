@@ -1,14 +1,14 @@
 const { ChatModel } = require("../models");
 
 // to get a chat by team ID
-const getChatByTeam = async (teamId) => {
+exports.getChatByTeam = async (teamId) => {
   return await ChatModel.findOne({ team_id: teamId })
     .populate("messages.user", "username email")
     .populate("explainer", "username email");
 };
 
 // to create a chat for a team
-const createChatForTeam = async (teamId) => {
+exports.createChatForTeam = async (teamId) => {
   // check if chat already exists
   const existingChat = await ChatModel.findOne({ team_id: teamId });
   if (existingChat) {
@@ -20,9 +20,4 @@ const createChatForTeam = async (teamId) => {
     team_id: teamId,
     messages: [],
   });
-};
-
-module.exports = {
-  getChatByTeam,
-  createChatForTeam,
 };

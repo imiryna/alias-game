@@ -12,24 +12,15 @@ const teamSchema = new Schema({
   player_list: [
     {
       type: Schema.Types.ObjectId,
-      ref: "user", // reference to players
+      ref: "User", // reference to players
     },
   ],
   team_score: {
     type: Number,
     default: 0,
   },
-  currentExplainer: {
-    type: Schema.Types.ObjectId,
-    ref: "user",
-    default: null,
-  },
-  currentExplainerIndex: {
-    type: Number,
-    default: 0,
-  },
 });
 
-const TeamModel = model("team", teamSchema);
+const TeamModel = model("game", teamSchema);
 
 module.exports = TeamModel;
