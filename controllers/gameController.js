@@ -7,7 +7,6 @@ exports.createGame = catchAsync(async (req, res) => {
   const { name, settings } = req.body;
   const admin = req.user?._id;
 
-  if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
   const newGame = await gameService.createGame({
     name,
     adminId: admin,

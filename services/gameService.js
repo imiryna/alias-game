@@ -1,5 +1,6 @@
 const GameModel = require("../models/gameModel");
-const { generateVocabulary, pickRandomWord } = require("../utils");
+const { generateVocabulary, pickRandomWord, HttpError} = require("../utils");
+const {StatusCodes} = require("http-status-codes");
 
 /**
  * Create a new game
@@ -10,6 +11,8 @@ const { generateVocabulary, pickRandomWord } = require("../utils");
  * @returns {Promise<*>}
  */
 async function createGame({ name, adminId, settings = {}}) {
+    if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
+
     const wordAmount = settings.word_amount || 10;
     let vocabulary = generateVocabulary(wordAmount);
 
