@@ -1,5 +1,5 @@
 const { getNextExplainer } = require('../utils');
-const Team = require('../models/');
+const { Team } = require('../models');
 
 async function chooseNextExplainer(teamId) {
     const team = await Team.findById(teamId).populate('player_list');

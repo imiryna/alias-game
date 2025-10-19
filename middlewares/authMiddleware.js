@@ -8,3 +8,4 @@ exports.authMiddleware = (req, res, next) => {
   next();
 };
 
+//exports.checkSignupData = async (req, res, next) => {};

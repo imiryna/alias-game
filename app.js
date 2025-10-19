@@ -6,10 +6,11 @@ const userRoutes = require("./routes/userRoutes");
 const gameRoutes = require("./routes/gameRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+// const mongoose = require("mongoose");
 
 const app = express();
-//const routerApi = require("./routes/index.js");
 
+app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
 
@@ -23,6 +24,7 @@ app.use("/api/game", gameRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
 
+// app.use("/api", routerApi);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });

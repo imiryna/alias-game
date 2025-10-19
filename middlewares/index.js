@@ -7,3 +7,9 @@ module.exports = {
   //validateAuth,
   validateUser,
 };
+const { checkSignupData } = require("./authMiddleware");
+
+module.exports = {
+  checkSignupData,
+  authMiddleware,
+};

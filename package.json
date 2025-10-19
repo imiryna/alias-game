@@ -17,14 +17,12 @@
     "dotenv": "^17.2.3",
     "eslint": "^9.37.0",
     "globals": "^16.4.0",
-    "jest": "^30.2.0",
     "nodemon": "^3.1.10"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "joi": "^18.0.1",
-    "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "morgan": "^1.10.1",
     "random-words": "^2.0.1"
