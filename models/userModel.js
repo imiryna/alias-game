@@ -22,6 +22,7 @@ const userSchema = new Schema({
     type: String,
     default: null,
   },
+  refreshToken: { type: String },
 });
 
 const UserModel = model("user", userSchema);

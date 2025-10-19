@@ -1,5 +1,7 @@
-const { signup } = require("./authController");
+const { signup, login, refresh } = require("./authController");
 
 module.exports = {
   signup,
+  login,
+  refresh,
 };

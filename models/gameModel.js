@@ -8,13 +8,13 @@ const gameSchema = new Schema(
     },
     admin: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "user",
       required: [true, "Game must have an admin (owner)"],
     },
     teams: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Team",
+        ref: "team",
         required: false, // default teams can be created on game start
       },
     ],

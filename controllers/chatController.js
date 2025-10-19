@@ -1,4 +1,4 @@
-const ChatModel = require("../models/chatModel");
+const ChatModel = require("../models");
 const { catchAsync, HttpError } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
@@ -6,9 +6,7 @@ const { StatusCodes } = require("http-status-codes");
 exports.getChatByTeam = catchAsync(async (req, res) => {
   const { teamId } = req.params;
 
-  const chat = await ChatModel.findOne({ team_id: teamId })
-    .populate("messages.user", "username email")
-    .populate("explainer", "username email");
+  const chat = await ChatModel.findOne({ team_id: teamId }).populate("messages.user", "username email").populate("explainer", "username email");
 
   if (!chat) {
     throw new HttpError(StatusCodes.NOT_FOUND, "Chat not found for this team");

@@ -6,7 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const gameRoutes = require("./routes/gameRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const chatRoutes = require("./routes/chatRoutes");
-// const authRouter = require("./routes/authRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 //const routerApi = require("./routes/index.js");
@@ -23,6 +23,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/game", gameRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/auth", authRoutes);
 
 app.get("/help", (req, res) => {
   return res.status(200).json({ message: "hello" });

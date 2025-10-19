@@ -1,4 +1,4 @@
-const { UserModel } = require("../models/");
+const { UserModel } = require("../models");
 const { HttpError } = require("../utils");
 
 // to get all users list
@@ -7,14 +7,12 @@ exports.getAllUsers = async () => {
 };
 
 // to get a user by id
-exports.getUserById = async (id) => {
+exports.getOneUser = async (id) => {
   return await UserModel.findById(id, "-passwordHash");
 };
-
-// to create a new user
-/*const createUser = async (userData) => {
-  return await User.create(userData);
-};*/
+exports.createUser = async (data) => {
+  return await UserModel.findOne(data.email);
+};
 
 // to update user stats
 exports.updateUserStats = async (id, statsData) => {

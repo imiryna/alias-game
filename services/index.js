@@ -1,11 +1,18 @@
 const { chooseNextExplainer } = require("./teamService");
 const { createGame, endRound, startRound } = require("./gameService");
-// const { checkUserExists, signup } = require("./authService");
+const { signup, login, refresh } = require("./authService");
 const { signToken, checkToken } = require("./jwtService");
+const { checkUserExists, createUser, getUserById, updateUserStats, deleteUser } = require("./userService");
 
 module.exports = {
-  // checkUserExists,
-  // signup,
+  checkUserExists,
+  createUser,
+  getUserById,
+  updateUserStats,
+  deleteUser,
+  signup,
+  login,
+  refresh,
   signToken,
   checkToken,
   chooseNextExplainer,
@@ -13,13 +20,3 @@ module.exports = {
   startRound,
   endRound,
 };
-
-// const { signup } = require("./authService");
-// const { signToken, checkToken } = require("./jwtService");
-
-// module.exports = {
-//   checkUserExists,
-//   signup,
-//   signToken,
-//   checkToken,
-// };

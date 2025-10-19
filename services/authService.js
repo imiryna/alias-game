@@ -1,41 +1,67 @@
-const model = require("../models");
+const { UserModel } = require("../models");
 const { HttpError } = require("../utils");
 const bcrypt = require("bcryptjs");
-const { signToken } = require("./jwtService");
+const jwt = require("jsonwebtoken");
+const { signToken, createUser } = require("./jwtService");
 
+// helper for hashing
 const hashPassword = (password) => {
   const salt = process.env.BCRYPT_SALT;
-  const hash = bcrypt.hashSync(password, salt);
-
-  return hash;
+  return bcrypt.hashSync(password, salt);
 };
 
 exports.signup = async (data) => {
   const hash = hashPassword(data.password);
 
-  const newUser = await model.UsersModel.create({
+  const newUser = await createUser({
+    name: data.username,
     email: data.email,
     password: hash,
   });
+
+  const { accessToken, refreshToken } = signToken(newUser._id);
+  newUser.token = accessToken;
+  newUser.refreshToken = refreshToken;
+  await newUser.save();
+
   newUser.password = undefined;
 
-  const token = signToken(newUser.id);
-
-  return { user: newUser, token };
+  return { user: newUser, accessToken, refreshToken };
 };
 
+//login
 exports.login = async ({ email, password }) => {
-  const user = await model.UsersModel.findOne({ email: email }); //.select("+password")
+  const user = await UserModel.findOne({ email }).select("+password");
 
-  if (!user) throw new HttpError(401, "Not authrized..");
+  if (!user) throw new HttpError(401, "User not found");
 
-  const incomePassword = hashPassword(password);
+  const isMatch = bcrypt.compareSync(password, user.password);
+  if (!isMatch) throw new HttpError(401, "Wrong password");
 
-  if (incomePassword !== user.password) throw new HttpError(401, "Wrong password...");
-
-  const token = signToken(user.id);
-  user.token = token;
+  const { accessToken, refreshToken } = signToken(user._id);
+  user.token = accessToken;
+  user.refreshToken = refreshToken;
   await user.save();
+
   user.password = undefined;
-  return { user, token };
+  return user;
+};
+
+// refresh
+exports.refresh = async (token) => {
+  try {
+    const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+
+    const user = await UserModel.findById(payload.id);
+    if (!user || user.refreshToken !== token) throw new HttpError(403, "Invalid refresh token");
+
+    const { accessToken, refreshToken } = signToken(user._id);
+    user.token = accessToken;
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    return { accessToken, refreshToken };
+  } catch (err) {
+    throw new HttpError(403, "Token expired or invalid");
+  }
 };

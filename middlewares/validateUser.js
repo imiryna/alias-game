@@ -3,7 +3,7 @@ const Joi = require("joi");
 //User validate
 exports.createUserDataValidator = (data) =>
   Joi.object({
-    name: Joi.string().min(2).max(255).required().messages({
+    username: Joi.string().min(2).max(255).required().messages({
       "any.only": "Missing required name field",
     }),
     email: Joi.string().email().required().messages({
