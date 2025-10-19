@@ -1,10 +1,11 @@
 const userService = require("../services/userService");
 const { catchAsync, HttpError } = require("../utils");
+const { StatusCodes } = require("http-status-codes");
 
 // to get all users
 const getAllUsers = catchAsync(async (req, res) => {
   const users = await userService.getAllUsers();
-  res.status(200).json(users);
+  res.status(StatusCodes.OK).json(users);
 });
 
 // to get a user by id
@@ -12,10 +13,10 @@ const getUserById = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.params.id);
 
   if (!user) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
   }
 
-  res.status(200).json(user);
+  res.status(StatusCodes.OK).json(user);
 });
 
 // to create a new user
@@ -42,10 +43,10 @@ const updateUserStats = catchAsync(async (req, res) => {
   const updatedStats = await userService.updateUserStats(id, { gamesPlayed, wins });
 
   if (!updatedStats) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
   }
 
-  res.status(200).json({
+  res.status(StatusCodes.OK).json({
     message: "User stats updated successfully",
     stats: updatedStats,
   });
@@ -56,10 +57,10 @@ const deleteUser = catchAsync(async (req, res) => {
   const user = await userService.deleteUser(req.params.id);
 
   if (!user) {
-    throw new HttpError(404, "User not found");
+    throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
   }
 
-  res.status(200).json({ message: "User deleted successfully" });
+  res.status(StatusCodes.OK).json({ message: "User deleted successfully" });
 });
 
 module.exports = {
