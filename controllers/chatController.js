@@ -1,12 +1,12 @@
-const ChatModel = require("../models");
+const chatService = require("../services/chatService");
 const { catchAsync, HttpError } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
-// to get chat by team ID
+// to get a chat by team ID
 exports.getChatByTeam = catchAsync(async (req, res) => {
   const { teamId } = req.params;
 
-  const chat = await ChatModel.findOne({ team_id: teamId }).populate("messages.user", "username email").populate("explainer", "username email");
+  const chat = await chatService.getChatByTeam(teamId);
 
   if (!chat) {
     throw new HttpError(StatusCodes.NOT_FOUND, "Chat not found for this team");
@@ -15,19 +15,18 @@ exports.getChatByTeam = catchAsync(async (req, res) => {
   res.status(StatusCodes.OK).json(chat);
 });
 
-// to create chat for a team
+// to create a chat for a team
 exports.createChatForTeam = catchAsync(async (req, res) => {
   const { teamId } = req.params;
 
-  const existingChat = await ChatModel.findOne({ team_id: teamId });
-  if (existingChat) {
+  const chat = await chatService.createChatForTeam(teamId);
+
+  if (!chat) {
     throw new HttpError(StatusCodes.BAD_REQUEST, "Chat for this team already exists");
   }
 
-  const chat = await ChatModel.create({ team_id: teamId, messages: [] });
-
-  res.status(StatusCodes.CREATED).json({
-    message: "Chat created",
+  res.status(201).json({
+    message: "Chat created successfully",
     chat,
   });
 });

@@ -34,10 +34,10 @@ exports.signup = async (data) => {
 exports.login = async ({ email, password }) => {
   const user = await UserModel.findOne({ email }).select("+password");
 
-  if (!user) throw new HttpError(401, "User not found");
+  if (!user) throw new HttpError(StatusCodes.UNAUTHORIZED, "User not found");
 
   const isMatch = bcrypt.compareSync(password, user.password);
-  if (!isMatch) throw new HttpError(401, "Wrong password");
+  if (!isMatch) throw new HttpError(StatusCodes.UNAUTHORIZED, "Wrong password");
 
   const { accessToken, refreshToken } = signToken(user._id);
   user.token = accessToken;
@@ -54,7 +54,7 @@ exports.refresh = async (token) => {
     const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
     const user = await UserModel.findById(payload.id);
-    if (!user || user.refreshToken !== token) throw new HttpError(403, "Invalid refresh token");
+    if (!user || user.refreshToken !== token) throw new HttpError(StatusCodes.FORBIDDEN, "Invalid refresh token");
 
     const { accessToken, refreshToken } = signToken(user._id);
     user.token = accessToken;
@@ -62,7 +62,7 @@ exports.refresh = async (token) => {
     await user.save();
 
     return { accessToken, refreshToken };
-  } catch (err) {
-    throw new HttpError(403, "Token expired or invalid");
+  } catch{
+    throw new HttpError(StatusCodes.FORBIDDEN, "Token expired or invalid");
   }
 };
