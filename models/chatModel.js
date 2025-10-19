@@ -4,7 +4,7 @@ const chatSchema = new Schema(
   {
     team_id: {
       type: Schema.Types.ObjectId,
-      ref: "Team",
+      ref: "team",
       required: true,
     },
     current_word_to_guess: {
@@ -13,7 +13,7 @@ const chatSchema = new Schema(
     },
     messages: [
       {
-        user: { type: Schema.Types.ObjectId, ref: "User" },
+        user: { type: Schema.Types.ObjectId, ref: "user" },
         text: { type: String, required: true },
         timestamp: { type: Date, default: Date.now },
       },

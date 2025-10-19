@@ -1,9 +1,14 @@
-const { authMiddleware } = require("./authMiddleware");
-//const validateAuth = require("./validateAuth");
-const validateUser = require("./validateUser");
+const { checkSignupData, checkLoginData } = require("./authMiddleware");
+const { signupAuthDataValidator, loginAuthDataValidator } = require("./validateAuth");
+const { createUserDataValidator, updateUserDataValidator } = require("./validateUser");
+const { createTeamDataValidator } = require("./validateTeam");
 
 module.exports = {
-  authMiddleware,
-  //validateAuth,
-  validateUser,
+  checkSignupData,
+  checkLoginData,
+  signupAuthDataValidator,
+  loginAuthDataValidator,
+  createUserDataValidator,
+  updateUserDataValidator,
+  createTeamDataValidator,
 };

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
-const mongoUrl = process.env.MONGO_URL;
+const mongoUrl = process.env.MONGO_URL_LOCAL;
 
 async function startServer() {
   try {
