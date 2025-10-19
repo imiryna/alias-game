@@ -1,65 +1,76 @@
-const { GameModel } = require("../models");
+const GameModel = require("../models/gameModel");
+const { generateVocabulary, pickRandomWord, HttpError} = require("../utils");
+const { StatusCodes } = require("http-status-codes");
 
-// to create a new game
-const createGame = async (gameData, adminId) => {
-  const {
-    name,
-    settings = {},
-    word_vocabulary = [],
-    teams = [],
-    current_round = {},
-  } = gameData;
+/**
+ * Create a new game
+ *
+ * @param name
+ * @param adminId
+ * @param settings
+ * @returns {Promise<*>}
+ */
+exports.createGame = async ({ name, adminId, settings = {} }) => {
+    if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
 
-  const newGame = await GameModel.create({
-    name,
-    admin: adminId,
-    teams,
-    word_vocabulary,
-    settings,
-    current_round,
-  });
+    const wordAmount = settings.word_amount || 10;
+    const vocabulary = generateVocabulary(wordAmount);
 
-  return await newGame.populate([
-    { path: "admin", select: "username email" },
-    { path: "teams", select: "name team_score player_list" },
-  ]);
+    return await GameModel.create({
+        name,
+        admin: adminId,
+        settings: { ...settings, word_amount: wordAmount },
+        word_vocabulary: vocabulary,
+        current_round: { number: 1, is_active: false },
+    });
 };
 
-// to get all games
-const getAllGames = async () => {
-  return await GameModel.find()
-    .populate("admin", "username email")
-    .populate("teams", "name team_score player_list");
+/**
+ * Start a new round
+ *
+ * @param gameId
+ * @param activeTeamId
+ * @returns {Promise<{word_vocabulary}|*>}
+ */
+exports.startRound = async (gameId, activeTeamId) => {
+    const game = await GameModel.findById(gameId);
+    if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
+
+    if (!game.word_vocabulary || game.word_vocabulary.length === 0) {
+        throw new HttpError(StatusCodes.NO_CONTENT, "No words left in vocabulary");
+    }
+
+    const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
+
+    game.current_round = {
+        ...game.current_round,
+        active_team: activeTeamId,
+        current_word: word,
+        is_active: true,
+        number: game.current_round.number || 1,
+    };
+
+    game.word_vocabulary = updatedVocabulary;
+    await game.save();
+
+    return game;
 };
 
-// to get a game by id
-const getGameById = async (id) => {
-  return await GameModel.findById(id)
-    .populate("admin", "username email")
-    .populate("teams", "name team_score player_list");
-};
+/**
+ * End the current round
+ *
+ * @param gameId
+ * @returns {Promise<*>}
+ */
+exports.endRound = async (gameId) => {
+    const game = await GameModel.findById(gameId);
+    if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
-// to update a game
-const updateGame = async (id, updates) => {
-  const updatedGame = await GameModel.findByIdAndUpdate(id, updates, {
-    new: true,
-    runValidators: true,
-  })
-    .populate("admin", "username email")
-    .populate("teams", "name team_score player_list");
+    game.current_round.is_active = false;
+    game.current_round.current_word = null;
+    game.current_round.active_team = null;
+    game.current_round.number = (game.current_round.number || 1) + 1;
 
-  return updatedGame;
-};
-
-// to delete a game
-const deleteGame = async (id) => {
-  return await GameModel.findByIdAndDelete(id);
-};
-
-module.exports = {
-  createGame,
-  getAllGames,
-  getGameById,
-  updateGame,
-  deleteGame,
+    await game.save();
+    return game;
 };
