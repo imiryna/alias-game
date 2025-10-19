@@ -1,4 +1,4 @@
-const GameModel = require("../models/gameModel");
+const { GameModel} = require("../models");
 const { generateVocabulary, pickRandomWord, HttpError} = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 

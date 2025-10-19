@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const GameModel = require("../models/gameModel");
-const gameService = require("../services/gameService");
+const { GameModel } = require("../models");
+const { createGame, startRound, endRound } = require("../services");
 const { generateVocabulary, pickRandomWord } = require("../utils");
 
 jest.mock("../utils/generateVocabulary");
@@ -36,7 +36,7 @@ describe("Game Service", () => {
             return { word, updatedVocabulary };
         });
 
-        game = await gameService.createGame({
+        game = await createGame({
             name: "Test Game",
             adminId: new mongoose.Types.ObjectId(),
             settings: { word_amount: 5 },
@@ -53,7 +53,7 @@ describe("Game Service", () => {
 
     test("should start a new round and pick a word", async () => {
         const teamId = new mongoose.Types.ObjectId();
-        const updatedGame = await gameService.startRound(game._id, teamId);
+        const updatedGame = await startRound(game._id, teamId);
 
         expect(updatedGame.current_round.is_active).toBe(true);
         expect(updatedGame.current_round.current_word).toBe("dancer");
@@ -63,9 +63,9 @@ describe("Game Service", () => {
 
     test("should end the current round", async () => {
         const teamId = new mongoose.Types.ObjectId();
-        await gameService.startRound(game._id, teamId);
+        await startRound(game._id, teamId);
 
-        const endedGame = await gameService.endRound(game._id);
+        const endedGame = await endRound(game._id);
 
         expect(endedGame.current_round.is_active).toBe(false);
         expect(endedGame.current_round.current_word).toBeNull();
