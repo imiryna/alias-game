@@ -1,5 +1,6 @@
 const { UserModel } = require("../models");
 const { HttpError } = require("../utils");
+const { StatusCodes } = require("http-status-codes");
 
 // to get all users list
 exports.getAllUsers = async () => {
@@ -7,7 +8,7 @@ exports.getAllUsers = async () => {
 };
 
 // to get a user by id
-exports.getOneUser = async (id) => {
+exports.getUserById = async (id) => {
   return await UserModel.findById(id, "-passwordHash");
 };
 exports.createUser = async (data) => {
@@ -39,5 +40,5 @@ exports.deleteUser = async (id) => {
 exports.checkUserExists = async (filter) => {
   const userExist = await UserModel.exists(filter);
 
-  if (userExist) throw new HttpError(409, "Email in use");
+  if (userExist) throw new HttpError(StatusCodes.CONFLICT, "Email in use");
 };
