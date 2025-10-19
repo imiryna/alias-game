@@ -1,5 +1,5 @@
-const { getNextExplainer, HttpError } = require('../utils');
-const { Team } = require('../models');
+const { getNextExplainer, HttpError } = require("../utils");
+const { Team } = require("../models");
 const { StatusCodes } = require("http-status-codes");
 
 /**
