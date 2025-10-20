@@ -25,8 +25,10 @@ app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
 
-app.get("/help", (req, res) => {
-  return res.status(200).json({ message: "hello" });
+const { generateVocabulary } = require("./utils/generateVocabulary");
+app.get("/help", async (req, res) => {
+  const w = await generateVocabulary(20);
+  return res.status(200).json({ message: w });
 });
 
 // Routes
