@@ -30,10 +30,6 @@ app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
 
-app.get("/help", async (_, res) => {
-  return res.status(200).json({ message: "Hello" });
-});
-
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });
 });
