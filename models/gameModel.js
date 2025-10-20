@@ -33,16 +33,7 @@ const gameSchema = new Schema(
         default: 10, // number of words per game
       },
     },
-    //rounds: integer, defolt 10
-    //curent roud move to team
-    current_round: {
-      number: { type: Number, default: 1 }, // round counter
-      active_team: { type: Schema.Types.ObjectId, ref: "team" }, // whose turn it is
-      current_word: { type: String }, // word currently being guessed
-      is_active: { type: Boolean, default: false }, // whether the round is ongoing
-    },
   },
-  //
   { timestamps: true }
 );
 

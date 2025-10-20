@@ -15,3 +15,12 @@ exports.createTeam = async (teamData) => {
 
   return newTeam;
 };
+
+exports.getTeamById = async (teamId) => {
+  const team = await Team.findById(teamId).populate("player_list", "username email");
+
+  if (!team) {
+    throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
+  }
+  return team;
+};

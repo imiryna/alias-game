@@ -1,10 +1,14 @@
-const { chooseNextExplainer } = require("./teamService");
+const { chooseNextExplainer, getTeamById } = require("./teamService");
 const { createGame, endRound, startRound } = require("./gameService");
 const { signup, login, refresh } = require("./authService");
 const { signToken, checkToken } = require("./jwtService");
 const { checkUserExists, createUser, getUserById, updateUserStats, deleteUser } = require("./userService");
+const { joinTeam, leftTeam } = require("./logicGameService");
 
 module.exports = {
+  joinTeam,
+  leftTeam,
+  getTeamById,
   checkUserExists,
   createUser,
   getUserById,

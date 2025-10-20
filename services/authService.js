@@ -62,7 +62,7 @@ exports.refresh = async (token) => {
     await user.save();
 
     return { accessToken, refreshToken };
-  } catch{
+  } catch (err) {
     throw new HttpError(StatusCodes.FORBIDDEN, "Token expired or invalid");
   }
 };

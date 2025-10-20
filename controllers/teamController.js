@@ -1,6 +1,7 @@
 const teamService = require("../services/teamService");
 const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
+const { getTeamById } = require("../services");
 
 exports.createTeam = catchAsync(async (req, res) => {
   const { name, player_list } = req.body;
@@ -17,10 +18,15 @@ exports.getAllTeams = catchAsync(async (_req, res) => {
   res.status(StatusCodes.OK).json(teams);
 });
 
+// to get a team by id
 exports.getTeamById = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const team = await teamService.getTeamById(id);
-  res.status(StatusCodes.OK).json(team);
+  const team = getTeamById(id);
+
+  res.status(StatusCodes.OK).json({
+    message: "Success",
+    team,
+  });
 });
 
 exports.updateTeam = catchAsync(async (req, res) => {
