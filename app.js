@@ -7,10 +7,11 @@ const gameRoutes = require("./routes/gameRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const authRoutes = require("./routes/authRoutes");
+// const mongoose = require("mongoose");
 
 const app = express();
-//const routerApi = require("./routes/index.js");
 
+app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
 
@@ -18,21 +19,16 @@ if (process.env.NODE_ENV === "development") {
   app.use(logger("dev"));
 }
 
+app.get("/help", async (req, res) => {
+  return res.status(200).json({ message: "Hello" });
+});
+
 //app.use("/api", routerApi);
 app.use("/api/user", userRoutes);
 app.use("/api/game", gameRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
-
-const { generateVocabulary } = require("./utils/generateVocabulary");
-app.get("/help", async (req, res) => {
-  const w = await generateVocabulary(20);
-  return res.status(200).json({ message: w });
-});
-
-// Routes
-// app.use("/api/users", authRouter);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });

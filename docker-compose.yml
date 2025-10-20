@@ -24,9 +24,7 @@ services:
     depends_on:
       - mongo
     environment:
-      - MONGO_URL=${MONGO_URL}
-      - PORT=${PORT}
-      - NODE_ENV=${NODE_ENV}
+      - MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/${MONGO_DB}?authSource=admin
 
   mongo-express:
     image: mongo-express

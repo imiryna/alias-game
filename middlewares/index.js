@@ -12,3 +12,9 @@ module.exports = {
   updateUserDataValidator,
   createTeamDataValidator,
 };
+const { checkSignupData } = require("./authMiddleware");
+
+module.exports = {
+  checkSignupData,
+  authMiddleware,
+};
