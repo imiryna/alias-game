@@ -1,20 +1,19 @@
-const { checkSignupData, checkLoginData } = require("./authMiddleware");
+const { checkSignupData, protected } = require("./authMiddleware");
 const { signupAuthDataValidator, loginAuthDataValidator } = require("./validateAuth");
 const { createUserDataValidator, updateUserDataValidator } = require("./validateUser");
 const { createTeamDataValidator } = require("./validateTeam");
+const { createTeamIdValidator, createGameSchema } = require("./validateGame");
+const { validateTeamId } = require("./logicGameMiddleware");
 
 module.exports = {
   checkSignupData,
-  checkLoginData,
+  protected,
   signupAuthDataValidator,
   loginAuthDataValidator,
   createUserDataValidator,
   updateUserDataValidator,
   createTeamDataValidator,
-};
-const { checkSignupData } = require("./authMiddleware");
-
-module.exports = {
-  checkSignupData,
-  authMiddleware,
+  createTeamIdValidator,
+  createGameSchema,
+  validateTeamId,
 };

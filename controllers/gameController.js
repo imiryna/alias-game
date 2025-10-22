@@ -1,80 +1,40 @@
-const gameService = require("../services/gameService");
-const { catchAsync, HttpError } = require("../utils");
+const { createGame, getAllGames, getGameById, startRound, endRound, getFreeGamesOrCreateOne } = require("../services");
+const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
-// to create a new game
 exports.createGame = catchAsync(async (req, res) => {
   const { name, settings } = req.body;
   const adminId = req.user?._id;
 
-  if (!name) {
-    throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
-  }
-
-  const newGame = await gameService.createGame({ name, adminId, settings });
+  const newGame = await createGame({ name, adminId, settings });
 
   res.status(StatusCodes.CREATED).json({
-    message: "Game created successfully",
+    message: "Success",
     game: newGame,
   });
 });
 
-// to get all games
-exports.getAllGames = catchAsync(async (_req, res) => {
-  const games = await gameService.getAllGames();
+exports.getAllGames = catchAsync(async (_, res) => {
+  const games = await getAllGames();
   res.status(StatusCodes.OK).json(games);
 });
 
 // to get a game by id
 exports.getGameById = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const game = await gameService.getGameById(id);
-
-  if (!game) {
-    throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
-  }
+  const game = await getGameById(id);
 
   res.status(StatusCodes.OK).json(game);
-});
-
-// to update a game
-exports.updateGame = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const updatedGame = await gameService.updateGame(id, req.body);
-
-  if (!updatedGame) {
-    throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
-  }
-
-  res.status(StatusCodes.OK).json({
-    message: "Game updated successfully",
-    game: updatedGame,
-  });
-});
-
-// to delete a game
-exports.deleteGame = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const deletedGame = await gameService.deleteGame(id);
-
-  if (!deletedGame) {
-    throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
-  }
-
-  res.status(StatusCodes.OK).json({
-    message: "Game deleted successfully",
-    game: deletedGame,
-  });
 });
 
 // start a new round
 exports.startRound = catchAsync(async (req, res) => {
   const { gameId, teamId } = req.body;
-  const game = await gameService.startRound(gameId, teamId);
+  const game = await startRound(gameId, teamId);
 
   res.status(StatusCodes.OK).json({
     message: "Round started",
-    currentRound: game.current_round,
+    currentRound: game.currentRound,
     remainingVocabulary: game.word_vocabulary,
   });
 });
@@ -82,18 +42,18 @@ exports.startRound = catchAsync(async (req, res) => {
 // end the current round
 exports.endRound = catchAsync(async (req, res) => {
   const { gameId } = req.body;
-  const game = await gameService.endRound(gameId);
+  const game = await endRound(gameId);
 
   res.status(StatusCodes.OK).json({
     message: "Round ended",
-    currentRound: game.current_round,
+    currentRound: game.currentRound,
   });
 });
 
 // get a free game or create one
 exports.getFreeGamesOrCreateOne = catchAsync(async (req, res) => {
   const adminId = req.user?._id;
-  const game = await gameService.getFreeGamesOrCreateOne(adminId);
+  const game = await getFreeGamesOrCreateOne(adminId);
 
   res.status(StatusCodes.OK).json({
     message: "Free game fetched or created",

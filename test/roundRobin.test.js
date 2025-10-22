@@ -36,8 +36,6 @@ describe("Round Robin simulation", () => {
       expect(nextExplainer).toBeDefined();
       expect(typeof nextIndex).toBe("number");
 
-      console.log(`Round ${i + 1}: Index = ${nextIndex}, Player ID = ${nextExplainer._id?.toString() || nextExplainer.toString()}`);
-
       team.currentExplainer = nextExplainer._id || nextExplainer;
       team.currentExplainerIndex = nextIndex;
 

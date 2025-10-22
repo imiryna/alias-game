@@ -9,7 +9,7 @@ const gameSchema = new Schema(
     admin: {
       type: Schema.Types.ObjectId,
       ref: "user",
-      required: [true, "Game must have an admin (owner)"],
+      //required: [true, "Game must have an admin (owner)"],
     },
     teams: [
       {
@@ -29,6 +29,10 @@ const gameSchema = new Schema(
         default: 60, // seconds per round
       },
       word_amount: {
+        type: Number,
+        default: 10, // number of words per game
+      },
+      round_amount: {
         type: Number,
         default: 10, // number of words per game
       },

@@ -1,4 +1,6 @@
+const { StatusCodes } = require("http-status-codes");
 const { UserModel } = require("../models");
+const HttpError = require("../utils");
 
 // to get all users list
 exports.getAllUsers = async () => {
@@ -34,4 +36,10 @@ exports.updateUserStats = async (id, statsData) => {
 // to delete a user
 exports.deleteUser = async (id) => {
   return await UserModel.findByIdAndDelete(id);
+};
+
+exports.checkUserExists = async (filter) => {
+  const userExist = await UserModel.exists(filter);
+
+  if (userExist) throw new HttpError(StatusCodes.CONFLICT, "Email in use");
 };

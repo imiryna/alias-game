@@ -21,7 +21,7 @@ exports.getAllTeams = catchAsync(async (_req, res) => {
 // to get a team by id
 exports.getTeamById = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const team = getTeamById(id);
+  const team = await getTeamById(id);
 
   res.status(StatusCodes.OK).json({
     message: "Success",

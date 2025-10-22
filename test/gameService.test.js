@@ -7,69 +7,65 @@ jest.mock("../utils/generateVocabulary");
 jest.mock("../utils/pickRandomWord");
 
 beforeAll(async () => {
-    await mongoose.connect(process.env.MONGO_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
+  await mongoose.connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
 });
 
 afterAll(async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
+  await mongoose.connection.dropDatabase();
+  await mongoose.connection.close();
 });
 
 describe("Game Service", () => {
-    let game;
+  let game;
 
-    beforeEach(async () => {
-        await GameModel.deleteMany({});
+  beforeEach(async () => {
+    await GameModel.deleteMany({});
 
-        generateVocabulary.mockReturnValue([
-            "dancer",
-            "game",
-            "book"
-        ]);
+    generateVocabulary.mockReturnValue(["dancer", "game", "book"]);
 
-        pickRandomWord.mockImplementation((vocab) => {
-            const word = vocab[0];
-            const updatedVocabulary = vocab.slice(1);
-            return { word, updatedVocabulary };
-        });
-
-        game = await createGame({
-            name: "Test Game",
-            adminId: new mongoose.Types.ObjectId(),
-            settings: { word_amount: 5 },
-        });
+    pickRandomWord.mockImplementation((vocab) => {
+      const word = vocab[0];
+      const updatedVocabulary = vocab.slice(1);
+      return { word, updatedVocabulary };
     });
 
-    test("should create a new game with generated vocabulary", () => {
-        expect(game).toBeDefined();
-        expect(game.name).toBe("Test Game");
-        expect(game.word_vocabulary.length).toBe(3);
-        expect(game.current_round.is_active).toBe(false);
-        expect(game.current_round.number).toBe(1);
+    game = await createGame({
+      name: "Test Game",
+      adminId: new mongoose.Types.ObjectId(),
+      settings: { word_amount: 5 },
     });
+  });
 
-    test("should start a new round and pick a word", async () => {
-        const teamId = new mongoose.Types.ObjectId();
-        const updatedGame = await startRound(game._id, teamId);
+  test("should create a new game with generated vocabulary", () => {
+    expect(game).toBeDefined();
+    expect(game.name).toBe("Test Game");
+    expect(game.word_vocabulary.length).toBe(3);
+    expect(game.currentRound.is_active).toBe(false);
+    expect(game.currentRound.number).toBe(1);
+  });
 
-        expect(updatedGame.current_round.is_active).toBe(true);
-        expect(updatedGame.current_round.current_word).toBe("dancer");
-        expect(updatedGame.current_round.active_team.toString()).toBe(teamId.toString());
-        expect(updatedGame.word_vocabulary).toEqual(["game", "book"]);
-    });
+  test("should start a new round and pick a word", async () => {
+    const teamId = new mongoose.Types.ObjectId();
+    const updatedGame = await startRound(game._id, teamId);
 
-    test("should end the current round", async () => {
-        const teamId = new mongoose.Types.ObjectId();
-        await startRound(game._id, teamId);
+    expect(updatedGame.currentRound.is_active).toBe(true);
+    expect(updatedGame.currentRound.current_word).toBe("dancer");
+    expect(updatedGame.currentRound.active_team.toString()).toBe(teamId.toString());
+    expect(updatedGame.word_vocabulary).toEqual(["game", "book"]);
+  });
 
-        const endedGame = await endRound(game._id);
+  test("should end the current round", async () => {
+    const teamId = new mongoose.Types.ObjectId();
+    await startRound(game._id, teamId);
 
-        expect(endedGame.current_round.is_active).toBe(false);
-        expect(endedGame.current_round.current_word).toBeNull();
-        expect(endedGame.current_round.active_team).toBeNull();
-        expect(endedGame.current_round.number).toBe(2);
-    });
+    const endedGame = await endRound(game._id);
+
+    expect(endedGame.currentRound.is_active).toBe(false);
+    expect(endedGame.currentRound.current_word).toBeNull();
+    expect(endedGame.currentRound.active_team).toBeNull();
+    expect(endedGame.currentRound.number).toBe(2);
+  });
 });

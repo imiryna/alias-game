@@ -9,7 +9,7 @@ const teamSchema = new Schema({
   player_list: [
     {
       type: Schema.Types.ObjectId,
-      ref: "User", // reference to players
+      ref: "user", // reference to players
     },
   ],
   team_score: {
@@ -21,14 +21,13 @@ const teamSchema = new Schema({
     ref: "user",
     default: null,
   },
-  current_round: {
+  currentRound: {
     number: { type: Number, default: 1 }, // round counter
-    // active_team: { type: Schema.Types.ObjectId, ref: "Team" },
     current_word: { type: String }, // word currently being guessed
     is_active: { type: Boolean, default: false }, // whether the round is ongoing
   },
 });
 
-const TeamModel = model("game", teamSchema);
+const TeamModel = model("team", teamSchema);
 
 module.exports = TeamModel;

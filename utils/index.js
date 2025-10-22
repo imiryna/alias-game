@@ -5,9 +5,9 @@ const { getNextExplainer } = require("./teamRoundRobin");
 const { pickRandomWord } = require("./pickRandomWord");
 
 module.exports = {
-    catchAsync,
-    HttpError,
-    generateVocabulary,
-    getNextExplainer,
-    pickRandomWord,
+  catchAsync,
+  HttpError,
+  generateVocabulary,
+  getNextExplainer,
+  pickRandomWord,
 };

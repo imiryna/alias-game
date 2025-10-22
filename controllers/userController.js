@@ -60,7 +60,7 @@ const deleteUser = catchAsync(async (req, res) => {
     throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
   }
 
-  res.status(StatusCodes.OK).json({ message: "User deleted successfully" });
+  res.status(StatusCodes.OK).json({ message: "Success" });
 });
 
 module.exports = {
