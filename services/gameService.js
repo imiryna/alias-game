@@ -1,33 +1,56 @@
 const { GameModel } = require("../models");
 const { createTeam } = require("./teamService");
-const { pickRandomWord, HttpError } = require("../utils");
+const { pickRandomWord, HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
-const WordPOS = require("wordpos");
-const wordpos = new WordPOS();
+
+// to get all games
+exports.getAllGames = async () => {
+  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list");
+};
+
+// to get a game by id
+exports.getGameById = async (id) => {
+  const game = await GameModel.findById(id)
+    .populate("admin", "username email")
+    .populate({
+      path: "teams",
+      select: "name team_score player_list",
+      populate: {
+        path: "player_list",
+        select: "username name",
+      },
+    });
+
+  if (!game) {
+    throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
+  }
+  return game;
+};
 
 // Create a new game with teams and generate word vocabulary using WordPOS
-
 exports.createGame = async ({ name, adminId, settings = {} }) => {
   if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
 
   // create two teams for the game
-  const team1 = await createTeam({ name: "Team 1" });
-  const team2 = await createTeam({ name: "Team 2" });
+  const team1 = await createTeam();
+  const team2 = await createTeam();
 
   // determine word amount from settings or use default
   const wordAmount = settings.word_amount || 10;
 
-  // to get random nouns for the game's word vocabulary
-  const nouns = await wordpos.randNoun({ count: wordAmount });
+  // determine roun amount or use default
+  const roundAmount = settings.round_amount || 10;
 
-  // create the game with teams and word vocabulary
+  // to get random nouns for the game's word vocabulary
+  const nouns = await generateVocabulary(roundAmount);
+
   const game = await GameModel.create({
     name,
     admin: adminId,
     teams: [team1._id, team2._id],
-    settings: { ...settings, word_amount: wordAmount },
+    settings: { ...settings, word_amount: wordAmount, round_amount: roundAmount },
     word_vocabulary: nouns,
-    current_round: { number: 1, is_active: false },
+    currentRound: { number: 1, is_active: false },
   });
 
   // save the game reference in teams
@@ -36,12 +59,7 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   await team1.save();
   await team2.save();
 
-  return game
-    .populate({
-      path: "teams",
-      populate: { path: "player_list", select: "username email" },
-    })
-    .populate("admin", "username email");
+  return game;
 };
 
 // Start a new round
@@ -56,12 +74,12 @@ exports.startRound = async (gameId, activeTeamId) => {
 
   const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
 
-  game.current_round = {
-    ...game.current_round,
+  game.currentRound = {
+    ...game.currentRound,
     active_team: activeTeamId,
     current_word: word,
     is_active: true,
-    number: game.current_round.number || 1,
+    number: game.currentRound.number || 1,
   };
 
   game.word_vocabulary = updatedVocabulary;
@@ -70,35 +88,21 @@ exports.startRound = async (gameId, activeTeamId) => {
   return game;
 };
 
-/**
- * End the current round
- *
- * @param gameId
- * @returns {Promise<*>}
- */
+//End the current round
+
 exports.endRound = async (gameId) => {
   const game = await GameModel.findById(gameId);
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
-  game.current_round.is_active = false;
-  game.current_round.current_word = null;
-  game.current_round.active_team = null;
-  game.current_round.number = (game.current_round.number || 1) + 1;
+  game.currentRound.is_active = false;
+  game.currentRound.current_word = null;
+  game.currentRound.active_team = null;
+  game.currentRound.number = (game.currentRound.number || 1) + 1;
 
   await game.save();
   return game;
 };
 
-// to get all games
-exports.getAllGames = async () => {
-  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list");
-};
-
-// to get a game by id
-exports.getGameById = async (id) => {
-  return await GameModel.findById(id).populate("admin", "username email").populate("teams", "name team_score player_list");
-};
-
 //to find a game with missing team(s) or insufficient players
 const findGameWithSpace = async () => {
   return await GameModel.findOne({
@@ -118,14 +122,14 @@ exports.getFreeGamesOrCreateOne = async (adminId) => {
 
   if (!game) {
     // create a new game
-    game = await exports.createGame({ name: `Game_${Date.now()}`, adminId });
+    game = await this.createGame({ name: `Game_${Date.now()}`, adminId });
 
-    // create 2 teams for the new game
-    const team1 = await createTeam({ name: "Team 1" });
-    const team2 = await createTeam({ name: "Team 2" });
+    // // create 2 teams for the new game
+    // const team1 = await createTeam({ name: "Team 1" });
+    // const team2 = await createTeam({ name: "Team 2" });
 
-    game.teams.push(team1._id, team2._id);
-    await game.save();
+    // game.teams.push(team1._id, team2._id);
+    // await game.save();
   } else {
     // check if we need to add missing teams
     const existingTeamsCount = game.teams.length;
@@ -145,94 +149,17 @@ exports.getFreeGamesOrCreateOne = async (adminId) => {
     .populate("admin", "username email");
 };
 
-/*
-// to update a game
-exports.updateGame = async (id, updates) => {
-  const updatedGame = await GameModel.findByIdAndUpdate(id, updates, {
-    new: true,
-    runValidators: true,
-  })
-    .populate("admin", "username email")
-    .populate("teams", "name team_score player_list");
-
-  return updatedGame;
-};*/
-
 // to delete a game
 exports.deleteGame = async (id) => {
   return await GameModel.findByIdAndDelete(id);
 };
 
-// to get all games
-exports.getAllGames = async () => {
-  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list");
-};
-
-// to get a game by id
-exports.getGameById = async (id) => {
-  return await GameModel.findById(id).populate("admin", "username email").populate("teams", "name team_score player_list");
-};
-
-//to find a game with missing team(s) or insufficient players
-const findGameWithSpace = async () => {
-  return await GameModel.findOne({
-    $or: [
-      { teams: { $size: 0 } },
-      { "teams.1": { $exists: false } }, // second team missing
-    ],
-  }).populate({
-    path: "teams",
-    populate: { path: "player_list", select: "username email" },
+exports.isPlayerInGame = async (gameId, userId) => {
+  const game = await this.getGameById(gameId);
+  let inGame = false;
+  const teams = game.teams;
+  teams.forEach((team) => {
+    inGame = team.player_list.includes(userId);
   });
-};
-
-// to get a free game or create a new one with 2 teams
-exports.getFreeGamesOrCreateOne = async (adminId) => {
-  let game = await findGameWithSpace();
-
-  if (!game) {
-    // create a new game
-    game = await exports.createGame({ name: `Game_${Date.now()}`, adminId });
-
-    // create 2 teams for the new game
-    const team1 = await createTeam({ name: "Team 1" });
-    const team2 = await createTeam({ name: "Team 2" });
-
-    game.teams.push(team1._id, team2._id);
-    await game.save();
-  } else {
-    // check if we need to add missing teams
-    const existingTeamsCount = game.teams.length;
-
-    if (existingTeamsCount < 2) {
-      const team = await createTeam({ name: `Team ${existingTeamsCount + 1}` });
-      game.teams.push(team._id);
-      await game.save();
-    }
-  }
-
-  return game
-    .populate({
-      path: "teams",
-      populate: { path: "player_list", select: "username email" },
-    })
-    .populate("admin", "username email");
-};
-
-/*
-// to update a game
-exports.updateGame = async (id, updates) => {
-  const updatedGame = await GameModel.findByIdAndUpdate(id, updates, {
-    new: true,
-    runValidators: true,
-  })
-    .populate("admin", "username email")
-    .populate("teams", "name team_score player_list");
-
-  return updatedGame;
-};*/
-
-// to delete a game
-exports.deleteGame = async (id) => {
-  return await GameModel.findByIdAndDelete(id);
+  return inGame;
 };

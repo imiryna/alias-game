@@ -18,7 +18,7 @@ exports.checkSignupData = catchAsync(async (req, _, next) => {
   next();
 });
 
-exports.checkLoginData = catchAsync(async (req, _, next) => {
+exports.protected = catchAsync(async (req, _, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

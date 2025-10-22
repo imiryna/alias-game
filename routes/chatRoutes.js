@@ -1,8 +1,7 @@
+//const { authMiddleware } = require("../middleware");
+const { getChatByTeam, createChatForTeam } = require("../controllers");
 const express = require("express");
 const router = express.Router();
-
-//const { authMiddleware } = require("../middleware");
-const { getChatByTeam, createChatForTeam } = require("../controllers/chatController");
 
 // GET /api/chat/team/:teamId - to get the history of messages for team
 router.get("/team/:teamId", getChatByTeam);

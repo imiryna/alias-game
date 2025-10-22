@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const HttpError = require("../utils");
+const { HttpError } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
 exports.signToken = (id) => {
@@ -15,7 +15,7 @@ exports.checkToken = (token) => {
     const { id } = jwt.verify(token, process.env.JWT_SECRET);
 
     return id;
-  } catch (e) {
+  } catch {
     throw new HttpError(StatusCodes.UNAUTHORIZED, "Not logged in..");
   }
 };

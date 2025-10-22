@@ -31,6 +31,7 @@ exports.signup = async (data) => {
 };
 
 //login
+
 exports.login = async ({ email, password }) => {
   const user = await UserModel.findOne({ email }).select("+password");
 
@@ -49,6 +50,7 @@ exports.login = async ({ email, password }) => {
 };
 
 // refresh
+
 exports.refresh = async (token) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
@@ -62,7 +64,7 @@ exports.refresh = async (token) => {
     await user.save();
 
     return { accessToken, refreshToken };
-  } catch{
+  } catch {
     throw new HttpError(StatusCodes.FORBIDDEN, "Token expired or invalid");
   }
 };

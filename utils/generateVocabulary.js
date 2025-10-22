@@ -7,7 +7,7 @@ const WordPOS = require("wordpos");
  * @param roundAmount {number} - game.settings.word_amount
  * @returns {any[]}
  */
-exports.generateVocabulary = async (roundAmount = 10) => {
+exports.generateVocabulary = async (roundAmount) => {
   const wordpos = new WordPOS();
 
   if (typeof roundAmount !== "number" || roundAmount <= 0) {
