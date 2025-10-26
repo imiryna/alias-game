@@ -1,4 +1,4 @@
-const { getChatByTeam, createChatForTeam } = require("../services");
+const { getChatByTeam, createChatForTeam, createNewMessage } = require("../services");
 const { catchAsync, HttpError } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
@@ -28,5 +28,18 @@ exports.createChatForTeam = catchAsync(async (req, res) => {
   res.status(201).json({
     message: "Success",
     chat,
+  });
+});
+
+exports.sendMessageToTeam = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const teamId = req.body.teamId;
+  const message = req.body.message;
+
+  const m = createNewMessage({ userId, teamId, message });
+
+  res.status(200).json({
+    message: "Success",
+    text: m,
   });
 });
