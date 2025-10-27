@@ -72,6 +72,10 @@ exports.startRound = async (gameId, activeTeamId) => {
     throw new HttpError(StatusCodes.NO_CONTENT, "No words left in vocabulary");
   }
 
+  // todo check amount of users
+
+  // todo
+
   const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
 
   game.currentRound = {
@@ -123,15 +127,9 @@ exports.getFreeGamesOrCreateOne = async (adminId) => {
   if (!game) {
     // create a new game
     game = await this.createGame({ name: `Game_${Date.now()}`, adminId });
-
-    // // create 2 teams for the new game
-    // const team1 = await createTeam({ name: "Team 1" });
-    // const team2 = await createTeam({ name: "Team 2" });
-
-    // game.teams.push(team1._id, team2._id);
-    // await game.save();
   } else {
     // check if we need to add missing teams
+
     const existingTeamsCount = game.teams.length;
 
     if (existingTeamsCount < 2) {
