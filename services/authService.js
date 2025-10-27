@@ -2,7 +2,8 @@ const { UserModel } = require("../models");
 const { HttpError } = require("../utils");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { signToken, createUser } = require("./jwtService");
+const { createUser } = require("./userService");
+const { signToken } = require("./jwtService");
 const { StatusCodes } = require("http-status-codes");
 
 // helper for hashing

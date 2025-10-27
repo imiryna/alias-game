@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const { UserModel } = require("../models");
-const HttpError = require("../utils");
+const { HttpError } = require("../utils");
 
 // to get all users list
 exports.getAllUsers = async () => {
@@ -13,7 +13,9 @@ exports.getUserById = async (id) => {
 };
 
 exports.createUser = async (data) => {
-  return await UserModel.findOne(data.email);
+  const newUser = await UserModel.create(data);
+
+  return newUser;
 };
 
 // to update user stats
