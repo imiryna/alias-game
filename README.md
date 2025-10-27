@@ -234,3 +234,71 @@ If the refresh token is invalid or expired:
 ```
 
 ---
+
+# Socket.IO Integration
+
+This project uses **Socket.IO** with an **Express** and **MongoDB** backend to enable real-time communication between users.
+
+- Socket.IO runs on the **same port** as Express (`http://localhost:3000`).
+
+- Always perform user authentication before creating the Socket.IO connection on the client side, to ensure only authorized users can connect and join rooms.
+
+## Overview
+
+- **Express** handles REST API routes (e.g., `/messages`, `/teams/:id`).
+- **Socket.IO** manages real-time events like new messages, user connections, and online status.
+- **MongoDB** stores chats and messages persistently.
+
+## How It Works
+
+1. When a user connects, the server assigns a unique `socket.id`.
+2. Each team has its own **room** identified by `teamId`.
+3. Users join their team room via:
+
+   ```js
+   socket.emit("joinTeam", { userId, teamId });
+   ```
+
+4. Messages are sent in real time:
+
+   ```js
+   socket.emit("sendMessage", { teamId, userId, text });
+   ```
+
+5. The server saves messages to MongoDB and broadcasts them:
+
+   ```js
+   io.to(teamId).emit("newMessage", message);
+   ```
+
+## Example Events
+
+| Event         | Direction        | Description                              |
+| ------------- | ---------------- | ---------------------------------------- |
+| `joinTeam`    | Client → Server  | User joins a chat room                   |
+| `sendMessage` | Client → Server  | User sends a new message                 |
+| `newMessage`  | Server → Clients | Broadcasts a message to all room members |
+| `userJoined`  | Server → Clients | Notifies when someone connects           |
+| `userOffline` | Server → Clients | Notifies when someone disconnects        |
+
+## Development
+
+Start the server:
+
+```bash
+npm run start:dev
+```
+
+Connect with a client:
+
+Example connection as a client see `examples/clientTest.js`
+
+Start the client:
+
+```
+node clientTest.js <userId> <teamId>
+```
+
+This one will connect user with userId, team chat with teamId.
+
+---
