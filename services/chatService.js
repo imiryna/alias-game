@@ -7,7 +7,8 @@ exports.initChatSocket = (socketIoInstance) => {
 
 // to get a chat by team ID
 exports.getChatByTeam = async (teamId) => {
-  return await ChatModel.findOne({ team_id: teamId }).populate("messages.user", "username email").populate("explainer", "username email");
+  const chatHistory = await ChatModel.findOne({ team_id: teamId }).populate("messages.user", "name");
+  return chatHistory.messages;
 };
 
 // to create a chat for a team

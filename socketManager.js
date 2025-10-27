@@ -20,16 +20,24 @@ function setupSocket(io) {
       const chat = await ChatModel.findOne({ team_id: teamId });
       if (!chat) return;
 
-      const newMessage = {
+      let newMessage = {
         user: userId,
         text,
         timestamp: new Date(),
       };
 
       chat.messages.push(newMessage);
-      await chat.save();
+      let savedChat = await chat.save();
 
-      io.to(teamId).emit("newMessage", newMessage);
+      // populate the last message's user
+      savedChat = await savedChat.populate({
+        path: "messages.user",
+        match: { _id: userId },
+        select: "name",
+      });
+
+      const newMsg = savedChat.messages[savedChat.messages.length - 1];
+      io.to(teamId).emit("newMessage", newMsg);
     });
 
     // Handle disconnect
