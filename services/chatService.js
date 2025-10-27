@@ -29,6 +29,10 @@ exports.createNewMessage = async ({ userId, teamId, message }) => {
   const chat = await ChatModel.findOne({ team_id: teamId });
   if (!chat) throw new Error("Chat not found");
 
+  // todo check message for synonyms (as explaner) (A)
+  // todo check message for guess the word (A)
+  // todo check if a new user connect - get all history chat (A)
+
   const newMessage = { user: userId, text: message, timestamp: new Date() };
   chat.messages.push(newMessage);
   await chat.save();
