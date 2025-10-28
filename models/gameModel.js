@@ -37,6 +37,11 @@ const gameSchema = new Schema(
         default: 10, // number of words per game
       },
     },
+    status: {
+        type: String,
+        enum: ["waiting", "active", "ended"], //all possible states
+        default: "waiting",
+    },
   },
   { timestamps: true }
 );

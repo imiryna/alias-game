@@ -54,4 +54,8 @@ function setupSocket(io) {
   });
 }
 
-module.exports = { setupSocket };
+function getOnlineUsers() {
+  return onlineUsers;
+}
+
+module.exports = { setupSocket, getOnlineUsers };

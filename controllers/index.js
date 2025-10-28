@@ -1,5 +1,5 @@
 const { signup, login, refresh } = require("./authController");
-const { createGame, getAllGames, getGameById, endRound, startRound } = require("./gameController");
+const { createGame, getAllGames, getGameById, endRound, startRound, endGame } = require("./gameController");
 const { joinTheTeam, leftTheTeam, nextTeamRound } = require("./logicGameController");
 const { getChatByTeam, createChatForTeam, sendMessageToTeam } = require("./chatController");
 
@@ -9,6 +9,7 @@ module.exports = {
   refresh,
   createGame,
   getAllGames,
+  endGame,
   getGameById,
   endRound,
   startRound,
