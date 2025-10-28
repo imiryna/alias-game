@@ -19,14 +19,16 @@ if (process.env.NODE_ENV === "development") {
   app.use(logger("dev"));
 }
 
+app.get("/help", async (req, res) => {
+  return res.status(200).json({ message: "Hello" });
+});
+
 //app.use("/api", routerApi);
 app.use("/api/user", userRoutes);
 app.use("/api/game", gameRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
-
-// app.use("/api", routerApi);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });

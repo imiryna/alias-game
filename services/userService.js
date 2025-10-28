@@ -9,6 +9,7 @@ exports.getAllUsers = async () => {
 exports.getUserById = async (id) => {
   return await UserModel.findById(id, "-passwordHash");
 };
+
 exports.createUser = async (data) => {
   return await UserModel.findOne(data.email);
 };
@@ -34,4 +35,3 @@ exports.updateUserStats = async (id, statsData) => {
 exports.deleteUser = async (id) => {
   return await UserModel.findByIdAndDelete(id);
 };
-
