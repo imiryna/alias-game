@@ -1,7 +1,9 @@
-const { GameModel } = require("../models");
+const { GameModel, TeamModel } = require("../models");
 const { createTeam } = require("./teamService");
-const { pickRandomWord, HttpError, generateVocabulary } = require("../utils");
+const { HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
+const { getOnlineUsers } = require("../socketManager");
+const { nextRound } = require("./logicGameService");
 
 // to get all games
 exports.getAllGames = async () => {
@@ -62,36 +64,50 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   return game;
 };
 
-// Start a new round
-
-exports.startRound = async (gameId, activeTeamId) => {
+// Start a game for given team
+exports.startGameForTeam = async (gameId, teamId) => {
   const game = await GameModel.findById(gameId);
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
+  // Check vocabulary, if not - generate and stor vocabulary
   if (!game.word_vocabulary || game.word_vocabulary.length === 0) {
-    throw new HttpError(StatusCodes.NO_CONTENT, "No words left in vocabulary");
+    game.word_vocabulary = generateVocabulary(game.settings.round_amount);
+
+    await game.save();
   }
 
-  // todo check amount of users
+  // update team vocabulary before game start
+  const team = await TeamModel.findById(teamId).populate("player_list");
+  team.word_vocabulary = game.word_vocabulary;
+  // team.save();
 
-  // todo
+  if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
 
-  const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
+  const users = Array.from(team.player_list);
 
-  game.currentRound = {
-    ...game.currentRound,
-    active_team: activeTeamId,
-    current_word: word,
-    is_active: true,
-    number: game.currentRound.number || 1,
-  };
+  // check amount of users
+  let onlinUsers = getOnlineUsers().keys();
+  onlinUsers = Array.from(onlinUsers);
+  const minUsers = 2;
+  let intersection = users.filter((e) => onlinUsers.includes(e.id));
 
-  game.word_vocabulary = updatedVocabulary;
-  await game.save();
+  const userCount = intersection.length;
 
-  return game;
+  //TODO stop everything when game over. Not going foeward
+  // if (userCount < minUsers) {
+  //   gameOver(team);
+  // }
+  nextRound(teamId);
+
+  return team;
 };
 
+const gameOver = async (teamModel) => {
+  teamModel.team_score = 0;
+  teamModel.status = "ended";
+  teamModel.player_list = [];
+  await teamModel.save();
+};
 //End the current round
 
 exports.endRound = async (gameId) => {
@@ -156,6 +172,7 @@ exports.isPlayerInGame = async (gameId, userId) => {
   const game = await this.getGameById(gameId);
   let inGame = false;
   const teams = game.teams;
+  // TODO Promise to array
   teams.forEach((team) => {
     inGame = team.player_list.includes(userId);
   });

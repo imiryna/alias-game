@@ -2,7 +2,9 @@
 const { ChatModel } = require("./models");
 const onlineUsers = new Map(); // userId -> socketId
 
-function setupSocket(io) {
+let io;
+
+function setupSocket() {
   io.on("connection", (socket) => {
     console.log(`>>>>>>>>>>>> User connected: ${socket.id}`);
 
@@ -54,4 +56,22 @@ function setupSocket(io) {
   });
 }
 
-module.exports = { setupSocket };
+exports.initSocket = (server) => {
+  const { Server } = require("socket.io");
+  io = new Server(server, {
+    cors: { origin: "*" },
+  });
+  setupSocket();
+  return io;
+};
+
+exports.getIO = () => {
+  if (!io) {
+    throw new Error("Socket.io not initialized!");
+  }
+  return io;
+};
+
+exports.getOnlineUsers = () => {
+  return onlineUsers;
+};

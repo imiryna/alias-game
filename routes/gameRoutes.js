@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 
 // const { authMiddleware } = require("../middleware");
-const { createGame, getAllGames, getGameById } = require("../controllers");
+const { createGame, getAllGames, getGameById, startGame } = require("../controllers");
 
 router.post("/", createGame);
 router.get("/", getAllGames);
 router.get("/:id", getGameById);
+router.post("/startgame", startGame);
 
 module.exports = router;

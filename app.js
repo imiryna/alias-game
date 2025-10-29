@@ -33,7 +33,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/logic", logicGameRoutes);
 
-app.use((_, res, err) => {
+app.use((_, res) => {
   res.status(404).json({ message: "Not found" });
 });
 

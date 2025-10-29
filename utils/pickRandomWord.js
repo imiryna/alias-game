@@ -1,4 +1,4 @@
-const { HttpError } = require('../utils');
+const { HttpError } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
 /**
@@ -6,16 +6,16 @@ const { StatusCodes } = require("http-status-codes");
  * @param vocabulary
  * @returns {{updatedVocabulary: *[], word: *}}
  */
-exports.pickRandomWord = (vocabulary) => {
-    if (!Array.isArray(vocabulary) || vocabulary.length === 0) {
-        throw new HttpError(StatusCodes.BAD_REQUEST, "Vocabulary is empty or invalid");
-    }
+exports.pickRandomWord = (teamModel) => {
+  if (!Array.isArray(teamModel.word_vocabulary) || teamModel.word_vocabulary.length === 0) {
+    throw new HttpError(StatusCodes.BAD_REQUEST, "Vocabulary is empty or invalid");
+  }
 
-    const randomIndex = Math.floor(Math.random() * vocabulary.length);
-    const word = vocabulary[randomIndex];
+  const randomIndex = Math.floor(Math.random() * teamModel.word_vocabulary.length);
+  const word = teamModel.word_vocabulary[randomIndex];
 
-    const updatedVocabulary = [...vocabulary];
-    updatedVocabulary.splice(randomIndex, 1);
+  teamModel.word_vocabulary.splice(randomIndex, 1);
+  // teamModel.save();
 
-    return { word, updatedVocabulary };
+  return word;
 };
