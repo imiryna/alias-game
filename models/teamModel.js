@@ -1,4 +1,5 @@
 const { model, Schema } = require("mongoose");
+const TEAM_STATUS = require("../utils");
 
 const teamSchema = new Schema({
   name: {
@@ -33,8 +34,8 @@ const teamSchema = new Schema({
   ],
   status: {
     type: String,
-    enum: ["waiting", "active", "ended"], //all possible states
-    default: "waiting",
+    enum: TEAM_STATUS, //all possible states
+    default: TEAM_STATUS.WAITING,
   },
 });
 

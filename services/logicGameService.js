@@ -58,9 +58,10 @@ const nextWord = async (team) => {
 
 exports.nextRound = async (teamId) => {
   const team = await getTeamByIdForRound(teamId);
-  // if (!Array.isArray(team.player_list) || team.player_list.length === 0) {
-  //   throw new HttpError(StatusCodes.NOT_FOUND, "No players in team");
-  // }
+
+  if (!Array.isArray(team.player_list) || team.player_list.length === 0) {
+    throw new HttpError(StatusCodes.NOT_FOUND, "No players in team");
+  }
 
   let a = await nextWord(team);
 
