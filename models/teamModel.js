@@ -1,4 +1,5 @@
 const { model, Schema } = require("mongoose");
+const TEAM_STATUS = require("../utils");
 
 const teamSchema = new Schema({
   name: {
@@ -22,9 +23,19 @@ const teamSchema = new Schema({
     default: null,
   },
   currentRound: {
-    number: { type: Number, default: 1 }, // round counter
+    number: { type: Number, default: 0 }, // round counter
     current_word: { type: String }, // word currently being guessed
     is_active: { type: Boolean, default: false }, // whether the round is ongoing
+  },
+  word_vocabulary: [
+    {
+      type: String,
+    },
+  ],
+  status: {
+    type: String,
+    enum: TEAM_STATUS, //all possible states
+    default: TEAM_STATUS.WAITING,
   },
 });
 

@@ -36,6 +36,9 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+rl.setPrompt("You => ");
+rl.prompt();
+
 rl.on("line", (text) => {
   if (text.trim().toLowerCase() === "/exit") {
     console.log("👋 Exiting...");
@@ -45,6 +48,7 @@ rl.on("line", (text) => {
   }
 
   socket.emit("sendMessage", { teamId, userId, text });
+  rl.prompt();
 });
 
 // Start

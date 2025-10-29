@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { GameModel } = require("../models");
-const { createGame, startRound, endRound } = require("../services");
+const { createGame, startGameForTeam, endRound } = require("../services");
 const { generateVocabulary, pickRandomWord } = require("../utils");
 
 jest.mock("../utils/generateVocabulary");
@@ -59,7 +59,7 @@ describe("Game Service", () => {
 
   test("should end the current round", async () => {
     const teamId = new mongoose.Types.ObjectId();
-    await startRound(game._id, teamId);
+    await startGameForTeam(game._id, teamId);
 
     const endedGame = await endRound(game._id);
 
