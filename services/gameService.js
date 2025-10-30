@@ -1,8 +1,9 @@
 const { GameModel, TeamModel } = require("../models");
 const { createTeam } = require("./teamService");
-const { pickRandomWord, HttpError, generateVocabulary } = require("../utils");
+const { HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
-const { getIO } = require("../socketManager"); // websocket users map
+const { getOnlineUsers, getIO } = require("../socketManager"); // websocket users map
+const { nextRound } = require("./logicGameService");
 
 // Helper function: notify all users in a game room via Socket.IO
 const notifyUsersByGame = (gameId, message) => {
@@ -67,65 +68,65 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   return game;
 };
 
-// start a new round
-exports.startRound = async (gameId, activeTeamId) => {
+// Start a game for given team
+exports.startGameForTeam = async (gameId, teamId) => {
   const game = await GameModel.findById(gameId);
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
+  // Check vocabulary, if not - generate and stor vocabulary
   if (!game.word_vocabulary || game.word_vocabulary.length === 0) {
-    throw new HttpError(StatusCodes.NO_CONTENT, "No words left in vocabulary");
+    game.word_vocabulary = generateVocabulary(game.settings.round_amount);
+
+    await game.save();
   }
 
-  const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
+  // update team vocabulary before game start
+  const team = await TeamModel.findById(teamId).populate("player_list");
+  team.word_vocabulary = game.word_vocabulary;
+  // team.save();
 
-  game.currentRound = {
-    ...game.currentRound,
-    active_team: activeTeamId,
-    current_word: word,
-    is_active: true,
-    number: game.currentRound.number || 1,
-  };
+  if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
 
-  game.word_vocabulary = updatedVocabulary;
-  await game.save();
+  const users = Array.from(team.player_list);
 
-  return game;
+  // check amount of users
+  let onlinUsers = getOnlineUsers().keys();
+  onlinUsers = Array.from(onlinUsers);
+  const minUsers = 2;
+  let intersection = users.filter((e) => onlinUsers.includes(e.id));
+
+  const userCount = intersection.length;
+
+  //TODO stop everything when game over. Not going foeward
+  // if (userCount < minUsers) {
+  //   gameOver(team);
+  // }
+  nextRound(teamId);
+
+  return team;
 };
 
-// end the current round
-exports.endRound = async (gameId, { winningTeamId, points = 1 } = {}) => {
-  const game = await GameModel.findById(gameId).populate("teams");
+exports.gameOver = async (teamModel) => {
+  teamModel.team_score = 0;
+  teamModel.status = "ended";
+  teamModel.player_list = [];
+  await teamModel.save();
+};
+//End the current round
+
+exports.endRound = async (gameId) => {
+  const game = await GameModel.findById(gameId);
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
-  // update winning team's score
-  if (winningTeamId) {
-    const team = await TeamModel.findById(winningTeamId);
-    if (team) {
-      team.team_score += points;
-      team.currentRound.is_active = false;
-      team.currentRound.current_word = null;
-      await team.save();
-    }
-  }
+  game.currentRound.is_active = false;
+  game.currentRound.current_word = null;
+  game.currentRound.active_team = null;
+  game.currentRound.number = (game.currentRound.number || 1) + 1;
 
-  // check number of played rounds
-  const playedRounds = Math.max(
-    ...(await Promise.all(
-      game.teams.map(async (tid) => {
-        const t = await TeamModel.findById(tid);
-        return t?.currentRound?.number || 0;
-      })
-    ))
-  );
-
-  // if the limit of rounds is reached, end the game
-  if (playedRounds >= game.settings.round_amount) {
-    return exports.endGame(gameId);
-  }
-
-  notifyUsersByGame(game._id, `Round ${playedRounds} ended.`);
+  await game.save();
   return game;
 };
+
 
 // end the game
 exports.endGame = async (gameId) => {

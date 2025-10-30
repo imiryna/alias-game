@@ -2,12 +2,15 @@
 
 exports.getNextExplainer = (players, currentExplainer) => {
   let explainer = null;
+  let explainerIndex = null;
+  const playersIndexs = players.map((p) => p._id.toString());
 
   if (!currentExplainer) {
     explainer = players[0];
   } else {
-    const nextIndex = players.indexof(currentExplainer);
-    explainer = (nextIndex + 1) % players.length;
+    const nextIndex = playersIndexs.indexOf(currentExplainer._id.toString());
+    explainerIndex = (nextIndex + 1) % playersIndexs.length;
   }
+  explainer = players[explainerIndex];
   return explainer;
 };

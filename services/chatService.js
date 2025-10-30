@@ -1,9 +1,5 @@
 const { ChatModel } = require("../models");
-let io;
-
-exports.initChatSocket = (socketIoInstance) => {
-  io = socketIoInstance;
-};
+const { getIO } = require("../socketManager");
 
 // to get a chat by team ID
 exports.getChatByTeam = async (teamId) => {
@@ -27,6 +23,7 @@ exports.createChatForTeam = async (teamId) => {
 };
 
 exports.createNewMessage = async ({ userId, teamId, message }) => {
+  let io = getIO();
   const chat = await ChatModel.findOne({ team_id: teamId });
   if (!chat) throw new Error("Chat not found");
 

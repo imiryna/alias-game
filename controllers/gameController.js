@@ -1,4 +1,4 @@
-const { createGame, getAllGames, getGameById, startRound, endRound, getFreeGamesOrCreateOne, endGame } = require("../services");
+const { createGame, getAllGames, getGameById, startGameForTeam, endRound, endGame, getFreeGamesOrCreateOne } = require("../services");
 const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
@@ -27,10 +27,10 @@ exports.getGameById = catchAsync(async (req, res) => {
   res.status(StatusCodes.OK).json(game);
 });
 
-// start a new round
-exports.startRound = catchAsync(async (req, res) => {
+// start a game for the team
+exports.startGame = catchAsync(async (req, res) => {
   const { gameId, teamId } = req.body;
-  const game = await startRound(gameId, teamId);
+  const game = await startGameForTeam(gameId, teamId);
 
   res.status(StatusCodes.OK).json({
     message: "Round started",

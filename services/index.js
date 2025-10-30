@@ -1,13 +1,12 @@
-const { chooseNextExplainer, getTeamById } = require("./teamService");
-const { createGame, endRound, startRound, getAllGames, getGameById, isPlayerInGame } = require("./gameService");
+const { getTeamById } = require("./teamService");
+const { createGame, endRound, startGameForTeam, getAllGames, getGameById } = require("./gameService");
 const { signup, login, refresh } = require("./authService");
 const { signToken, checkToken } = require("./jwtService");
 const { checkUserExists, createUser, getUserById, updateUserStats, deleteUser } = require("./userService");
 const { joinTeam, leftTeam, nextRound } = require("./logicGameService");
-const { getChatByTeam, createChatForTeam, createNewMessage, initChatSocket } = require("./chatService");
+const { getChatByTeam, createChatForTeam, createNewMessage } = require("./chatService");
 
 module.exports = {
-  isPlayerInGame,
   getChatByTeam,
   createChatForTeam,
   joinTeam,
@@ -24,12 +23,10 @@ module.exports = {
   refresh,
   signToken,
   checkToken,
-  chooseNextExplainer, // TODO
   createGame,
-  startRound,
+  startGameForTeam,
   endRound,
   getAllGames,
   getGameById,
   createNewMessage,
-  initChatSocket,
 };
