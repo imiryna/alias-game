@@ -1,12 +1,4 @@
-const { 
-  createGame,
-  getAllGames, 
-  getGameById, 
-  startRound, 
-  endRound, 
-  getFreeGamesOrCreateOne, 
-  endGame 
-} = require("../services");
+const { createGame, getAllGames, getGameById, startRound, endRound, getFreeGamesOrCreateOne, endGame } = require("../services");
 const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 

@@ -1,28 +1,16 @@
-const { GameModel, Team } = require("../models");
+const { GameModel, TeamModel } = require("../models");
 const { createTeam } = require("./teamService");
 const { pickRandomWord, HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
-const { getOnlineUsers } = require("../socketManager"); // websocket users map 
+const { getIO } = require("../socketManager"); // websocket users map
 
-// Helper: the notification online users by Socket.IO
-const notifyUsersByGame = async (game, message, io) => {
-  const onlineUsers = getOnlineUsers();
-  const userIds = [];
-
-  for (const teamId of game.teams) {
-    const team = await Team.findById(teamId).populate("player_list", "_id");
-    if (team) {
-      team.player_list.forEach((p) => userIds.push(p._id.toString()));
-    }
+// Helper function: notify all users in a game room via Socket.IO
+const notifyUsersByGame = (gameId, message) => {
+  const io = getIO();
+  if (io) {
+    io.to(gameId).emit("gameNotification", { message });
+    console.log(`Notified all users in game ${gameId}: ${message}`);
   }
-
-  userIds.forEach((userId) => {
-    const socketId = onlineUsers.get(userId);
-    if (socketId && io) {
-      io.to(socketId).emit("gameNotification", { message });
-      console.log(`Notified user ${userId}: ${message}`);
-    }
-  });
 };
 
 // to get all games
@@ -50,15 +38,15 @@ exports.getGameById = async (id) => {
 };
 
 // to create a new game
-exports.createGame = async ({ name, adminId, settings = {}, io }) => {
+exports.createGame = async ({ name, adminId, settings = {} }) => {
   if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
 
-  const team1 = await createTeam({ name: "Team 1" });
-  const team2 = await createTeam({ name: "Team 2" });
+  // the checking of default team name is in createTeam
+  const team1 = await createTeam();
+  const team2 = await createTeam();
 
   const roundAmount = settings.round_amount || 5;
   const wordAmount = settings.word_amount || 10;
-
   const vocabulary = await generateVocabulary(wordAmount);
 
   const game = await GameModel.create({
@@ -75,12 +63,11 @@ exports.createGame = async ({ name, adminId, settings = {}, io }) => {
   await team1.save();
   await team2.save();
 
-  await notifyUsersByGame(game, `Game "${game.name}" has been created!`, io);
+  notifyUsersByGame(game._id, `Game "${game.name}" has been created!`);
   return game;
 };
 
-// Start a new round
-
+// start a new round
 exports.startRound = async (gameId, activeTeamId) => {
   const game = await GameModel.findById(gameId);
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
@@ -88,10 +75,6 @@ exports.startRound = async (gameId, activeTeamId) => {
   if (!game.word_vocabulary || game.word_vocabulary.length === 0) {
     throw new HttpError(StatusCodes.NO_CONTENT, "No words left in vocabulary");
   }
-
-  // todo check amount of users
-
-  // todo
 
   const { word, updatedVocabulary } = pickRandomWord(game.word_vocabulary);
 
@@ -109,14 +92,14 @@ exports.startRound = async (gameId, activeTeamId) => {
   return game;
 };
 
-// end round
-exports.endRound = async (gameId, { winningTeamId, points = 1 } = {}, io) => {
+// end the current round
+exports.endRound = async (gameId, { winningTeamId, points = 1 } = {}) => {
   const game = await GameModel.findById(gameId).populate("teams");
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
-  // to update the winning team's score
+  // update winning team's score
   if (winningTeamId) {
-    const team = await Team.findById(winningTeamId);
+    const team = await TeamModel.findById(winningTeamId);
     if (team) {
       team.team_score += points;
       team.currentRound.is_active = false;
@@ -125,11 +108,11 @@ exports.endRound = async (gameId, { winningTeamId, points = 1 } = {}, io) => {
     }
   }
 
-  // to check how many rounds have been played
+  // check number of played rounds
   const playedRounds = Math.max(
     ...(await Promise.all(
       game.teams.map(async (tid) => {
-        const t = await Team.findById(tid);
+        const t = await TeamModel.findById(tid);
         return t?.currentRound?.number || 0;
       })
     ))
@@ -137,36 +120,35 @@ exports.endRound = async (gameId, { winningTeamId, points = 1 } = {}, io) => {
 
   // if the limit of rounds is reached, end the game
   if (playedRounds >= game.settings.round_amount) {
-    return exports.endGame(gameId, io);
+    return exports.endGame(gameId);
   }
 
-  await notifyUsersByGame(game, `Round ${playedRounds} ended.`, io);
+  notifyUsersByGame(game._id, `Round ${playedRounds} ended.`);
   return game;
 };
 
-// end game
-exports.endGame = async (gameId, io) => {
+// end the game
+exports.endGame = async (gameId) => {
   const game = await GameModel.findById(gameId).populate("teams");
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
   const scores = await Promise.all(
     game.teams.map(async (tId) => {
-      const t = await Team.findById(tId);
+      const t = await TeamModel.findById(tId);
       return { team: t.name, score: t.team_score };
     })
   );
 
   const winner = scores.reduce((a, b) => (a.score > b.score ? a : b));
 
-  await notifyUsersByGame(
-    game,
-    `Game "${game.name}" ended! Winner: ${winner.team} (${winner.score} points)`,
-    io
+  notifyUsersByGame(
+    game._id,
+    `Game "${game.name}" ended! Winner: ${winner.team} (${winner.score} points)`
   );
 
-  // the cleaning up users after game end
+  // cleanup
   for (const tId of game.teams) {
-    const team = await Team.findById(tId);
+    const team = await TeamModel.findById(tId);
     if (team) {
       team.player_list = [];
       team.currentRound = { number: 0, current_word: null, is_active: false };
@@ -183,11 +165,11 @@ exports.endGame = async (gameId, io) => {
   };
 };
 
-// to delete a game
-exports.deleteGame = async (id, io) => {
+// delete a game
+exports.deleteGame = async (id) => {
   const deleted = await GameModel.findByIdAndDelete(id);
   if (deleted) {
-    await notifyUsersByGame(deleted, `Game "${deleted.name}" has been deleted.`, io);
+    notifyUsersByGame(deleted._id, `Game "${deleted.name}" has been deleted.`);
   }
   return deleted;
 };
