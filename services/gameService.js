@@ -2,17 +2,10 @@ const { GameModel, TeamModel } = require("../models");
 const { createTeam } = require("./teamService");
 const { HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
-const { getOnlineUsers, getIO } = require("../socketManager"); // websocket users map
+const { getOnlineUsers } = require("../socketManager"); // websocket users map
+const { emitGameNotification } = require("./clientTest");
+const TEAM_STATUS = require("../utils/constants");
 const { nextRound } = require("./logicGameService");
-
-// Helper function: notify all users in a game room via Socket.IO
-const notifyUsersByGame = (gameId, message) => {
-  const io = getIO();
-  if (io) {
-    io.to(gameId).emit("gameNotification", { message });
-    console.log(`Notified all users in game ${gameId}: ${message}`);
-  }
-};
 
 // to get all games
 exports.getAllGames = async () => {
@@ -64,7 +57,7 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   await team1.save();
   await team2.save();
 
-  notifyUsersByGame(game._id, `Game "${game.name}" has been created!`);
+  emitGameNotification(game._id, `Game "${game.name}" has been created!`);
   return game;
 };
 
@@ -101,7 +94,13 @@ exports.startGameForTeam = async (gameId, teamId) => {
   // if (userCount < minUsers) {
   //   gameOver(team);
   // }
+  if (userCount < minUsers) {
+    emitGameNotification(game._id, `Not enough players online to start the game.`);
+    return team;
+  }
+
   nextRound(teamId);
+  emitGameNotification(game._id, `Team ${team.name} started the game!`);
 
   return team;
 };
@@ -124,6 +123,8 @@ exports.endRound = async (gameId) => {
   game.currentRound.number = (game.currentRound.number || 1) + 1;
 
   await game.save();
+
+  emitGameNotification(game._id, `Round ${game.currentRound.number} ended.`);
   return game;
 };
 
@@ -142,7 +143,7 @@ exports.endGame = async (gameId) => {
 
   const winner = scores.reduce((a, b) => (a.score > b.score ? a : b));
 
-  notifyUsersByGame(
+  emitGameNotification(
     game._id,
     `Game "${game.name}" ended! Winner: ${winner.team} (${winner.score} points)`
   );
@@ -152,12 +153,13 @@ exports.endGame = async (gameId) => {
     const team = await TeamModel.findById(tId);
     if (team) {
       team.player_list = [];
+      team.status = TEAM_STATUS.ENDED;
       team.currentRound = { number: 0, current_word: null, is_active: false };
       await team.save();
     }
   }
 
-  game.status = "ended";
+  game.status = TEAM_STATUS.ENDED;
   await game.save();
 
   return {
@@ -170,7 +172,7 @@ exports.endGame = async (gameId) => {
 exports.deleteGame = async (id) => {
   const deleted = await GameModel.findByIdAndDelete(id);
   if (deleted) {
-    notifyUsersByGame(deleted._id, `Game "${deleted.name}" has been deleted.`);
+    emitGameNotification(deleted._id, `Game "${deleted.name}" has been deleted.`);
   }
   return deleted;
 };
