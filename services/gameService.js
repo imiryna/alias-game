@@ -2,12 +2,16 @@ const { GameModel, TeamModel } = require("../models");
 const { createTeam } = require("./teamService");
 const { HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
-const { getOnlineUsers } = require("../socketManager");
+const { getOnlineUsers } = require("../socketManager"); // websocket users map
+const { emitGameNotification } = require("./clientTest");
+const TEAM_STATUS = require("../utils/constants");
 const { nextRound } = require("./logicGameService");
 
 // to get all games
 exports.getAllGames = async () => {
-  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list");
+  return await GameModel.find()
+    .populate("admin", "username email")
+    .populate("teams", "name team_score player_list");
 };
 
 // to get a game by id
@@ -23,44 +27,37 @@ exports.getGameById = async (id) => {
       },
     });
 
-  if (!game) {
-    throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
-  }
+  if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
   return game;
 };
 
-// Create a new game with teams and generate word vocabulary using WordPOS
+// to create a new game
 exports.createGame = async ({ name, adminId, settings = {} }) => {
   if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
 
-  // create two teams for the game
+  // the checking of default team name is in createTeam
   const team1 = await createTeam();
   const team2 = await createTeam();
 
-  // determine word amount from settings or use default
+  const roundAmount = settings.round_amount || 5;
   const wordAmount = settings.word_amount || 10;
-
-  // determine roun amount or use default
-  const roundAmount = settings.round_amount || 10;
-
-  // to get random nouns for the game's word vocabulary
-  const nouns = await generateVocabulary(roundAmount);
+  const vocabulary = await generateVocabulary(wordAmount);
 
   const game = await GameModel.create({
     name,
     admin: adminId,
     teams: [team1._id, team2._id],
-    settings: { ...settings, word_amount: wordAmount, round_amount: roundAmount },
-    word_vocabulary: nouns,
-    currentRound: { number: 1, is_active: false },
+    settings: { ...settings, round_amount: roundAmount, word_amount: wordAmount },
+    word_vocabulary: vocabulary,
+    status: "waiting",
   });
 
-  // save the game reference in teams
   team1.game = game._id;
   team2.game = game._id;
   await team1.save();
   await team2.save();
 
+  emitGameNotification(game._id, `Game "${game.name}" has been created!`);
   return game;
 };
 
@@ -97,12 +94,18 @@ exports.startGameForTeam = async (gameId, teamId) => {
   // if (userCount < minUsers) {
   //   gameOver(team);
   // }
+  if (userCount < minUsers) {
+    emitGameNotification(game._id, `Not enough players online to start the game.`);
+    return team;
+  }
+
   nextRound(teamId);
+  emitGameNotification(game._id, `Team ${team.name} started the game!`);
 
   return team;
 };
 
-const gameOver = async (teamModel) => {
+exports.gameOver = async (teamModel) => {
   teamModel.team_score = 0;
   teamModel.status = "ended";
   teamModel.player_list = [];
@@ -120,61 +123,62 @@ exports.endRound = async (gameId) => {
   game.currentRound.number = (game.currentRound.number || 1) + 1;
 
   await game.save();
+
+  emitGameNotification(game._id, `Round ${game.currentRound.number} ended.`);
   return game;
 };
 
-//to find a game with missing team(s) or insufficient players
-const findGameWithSpace = async () => {
-  return await GameModel.findOne({
-    $or: [
-      { teams: { $size: 0 } },
-      { "teams.1": { $exists: false } }, // second team missing
-    ],
-  }).populate({
-    path: "teams",
-    populate: { path: "player_list", select: "username email" },
-  });
-};
 
-// to get a free game or create a new one with 2 teams
-exports.getFreeGamesOrCreateOne = async (adminId) => {
-  let game = await findGameWithSpace();
+// end the game
+exports.endGame = async (gameId) => {
+  const game = await GameModel.findById(gameId).populate("teams");
+  if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
-  if (!game) {
-    // create a new game
-    game = await this.createGame({ name: `Game_${Date.now()}`, adminId });
-  } else {
-    // check if we need to add missing teams
+  const scores = await Promise.all(
+    game.teams.map(async (tId) => {
+      const t = await TeamModel.findById(tId);
+      return { team: t.name, score: t.team_score };
+    })
+  );
 
-    const existingTeamsCount = game.teams.length;
+  const winner = scores.reduce((a, b) => (a.score > b.score ? a : b));
 
-    if (existingTeamsCount < 2) {
-      const team = await createTeam({ name: `Team ${existingTeamsCount + 1}` });
-      game.teams.push(team._id);
-      await game.save();
+  emitGameNotification(
+    game._id,
+    `Game "${game.name}" ended! Winner: ${winner.team} (${winner.score} points)`
+  );
+
+  // cleanup
+  for (const tId of game.teams) {
+    const team = await TeamModel.findById(tId);
+    if (team) {
+      team.player_list = [];
+      team.status = TEAM_STATUS.ENDED;
+      team.currentRound = { number: 0, current_word: null, is_active: false };
+      await team.save();
     }
   }
 
-  return game
-    .populate({
-      path: "teams",
-      populate: { path: "player_list", select: "username email" },
-    })
-    .populate("admin", "username email");
+  game.status = TEAM_STATUS.ENDED;
+  await game.save();
+
+  return {
+    message: `Game ended. Winner: ${winner.team}`,
+    scores,
+  };
 };
 
-// to delete a game
+// delete a game
 exports.deleteGame = async (id) => {
-  return await GameModel.findByIdAndDelete(id);
+  const deleted = await GameModel.findByIdAndDelete(id);
+  if (deleted) {
+    emitGameNotification(deleted._id, `Game "${deleted.name}" has been deleted.`);
+  }
+  return deleted;
 };
 
+// check if a player is in a game
 exports.isPlayerInGame = async (gameId, userId) => {
   const game = await this.getGameById(gameId);
-  let inGame = false;
-  const teams = game.teams;
-  // TODO Promise to array
-  teams.forEach((team) => {
-    inGame = team.player_list.includes(userId);
-  });
-  return inGame;
+  return game.teams.some((team) => team.player_list.includes(userId));
 };
