@@ -2,6 +2,7 @@ const { HttpError, getNextExplainer, pickRandomWord } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const gameService = require("./gameService");
 const { getTeamByIdForRound, getTeamById } = require("./teamService");
+const { getIO } = require("../socketManager");
 
 // Checking that the team is not already on another team in this game
 const isTeamExist = async (teamId) => {
@@ -38,10 +39,19 @@ exports.joinTeam = async (teamId, userId) => {
 // };
 
 exports.leftTeam = async (teamId, userId) => {
+  const io = getIO();
   const team = await getTeamById(teamId);
+  if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team is not exist");
+
   team.player_list = team.player_list.filter((pl) => pl._id.toString() !== userId);
-  console.log(team.player_list);
   await team.save();
+
+  if (team.currentExplainer?.toString() === userId.toString()) {
+    team.currentExplainer = null;
+    await team.save();
+  }
+  io.to(team._id.toString()).emit("userLeft", { userId });
+
   return team.populate("player_list");
 };
 

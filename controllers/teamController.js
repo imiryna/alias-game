@@ -3,16 +3,6 @@ const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const { getTeamById } = require("../services");
 
-exports.createTeam = catchAsync(async (req, res) => {
-  const { name, player_list } = req.body;
-  const newTeam = await teamService.createTeam({ name, player_list });
-
-  res.status(StatusCodes.CREATED).json({
-    message: "Team created successfully",
-    team: newTeam,
-  });
-});
-
 exports.getAllTeams = catchAsync(async (_req, res) => {
   const teams = await teamService.getAllTeams();
   res.status(StatusCodes.OK).json(teams);
