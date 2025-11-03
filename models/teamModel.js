@@ -1,5 +1,5 @@
 const { model, Schema } = require("mongoose");
-const TEAM_STATUS = require("../utils");
+const { TEAM_STATUS } = require("../utils");
 
 const teamSchema = new Schema({
   name: {

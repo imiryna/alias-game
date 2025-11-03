@@ -13,7 +13,8 @@ socket.emit("joinTeam", { userId: userId, teamId: teamId });
 
 socket.on("userJoined", (data) => console.log("Someone joined:", data));
 socket.on("newMessage", (msg) => console.log(`[${msg.user.name}]:> ${msg.text}`));
-
+socket.on("roundTimerTick", (msg) => console.log(`Timer Ticking, left: ${msg.remaining}`));
+socket.on("roundEnded", (msg) => console.log(`Time UP! Round#${msg.round.number} is finished.`));
 // Send message
 //socket.emit("sendMessage", { teamId: teamId, userId: userId, text: initMessage });
 

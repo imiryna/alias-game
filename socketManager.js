@@ -3,9 +3,16 @@ const { ChatModel, TeamModel } = require("./models");
 const onlineUsers = new Map(); // userId -> socketId
 const { leftTeam } = require("./services");
 
+const EventEmitter = require("events");
+
+class GameEmitter extends EventEmitter {}
+
+// Export a single shared instance
+let gameEmitter = new GameEmitter();
+
 let io;
 
-function setupSocket() {
+function setupServer() {
   io.on("connection", (socket) => {
     console.log(`>>>>>>>>>>>> User connected: ${socket.id}`);
 
@@ -105,7 +112,7 @@ exports.initSocket = (server) => {
   io = new Server(server, {
     cors: { origin: "*" },
   });
-  setupSocket();
+  setupServer();
   return io;
 };
 
@@ -114,6 +121,13 @@ exports.getIO = () => {
     throw new Error("Socket.io not initialized!");
   }
   return io;
+};
+
+exports.getGameEmitter = () => {
+  if (!gameEmitter) {
+    throw new Error("Emmiter not initialized");
+  }
+  return gameEmitter;
 };
 
 exports.getOnlineUsers = () => {
