@@ -1,8 +1,8 @@
 const { HttpError, getNextExplainer, pickRandomWord } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const gameService = require("./gameService");
-const { getTeamByIdForRound, getTeamById } = require("./teamService");
-const { getIO } = require("../socketManager");
+const { getTeamById } = require("./teamService");
+const { getIO, getGameEmitter } = require("../socketManager");
 
 // Checking that the team is not already on another team in this game
 const isTeamExist = async (teamId) => {
@@ -29,14 +29,6 @@ exports.joinTeam = async (teamId, userId) => {
 
   return team;
 };
-//   const game = await getGameById(gameId);
-//   let inGame = false;
-//   const teams = game.teams;
-//   teams.forEach((team) => {
-//     inGame = team.player_list.includes(userId);
-//   });
-//   return inGame;
-// };
 
 exports.leftTeam = async (teamId, userId) => {
   const io = getIO();
@@ -66,23 +58,52 @@ const nextWord = async (team) => {
   return { nextExplainer, _nextWord };
 };
 
-exports.nextRound = async (teamId) => {
-  const team = await getTeamByIdForRound(teamId);
-
+exports.nextRound = async (team) => {
+  const ge = getGameEmitter();
   if (!Array.isArray(team.player_list) || team.player_list.length === 0) {
     throw new HttpError(StatusCodes.NOT_FOUND, "No players in team");
   }
 
   let a = await nextWord(team);
 
-  //  Updating the current round  +1
-  team.currentRound.number += 1;
-  team.currentRound.isActive = true;
-  team.currentRound.current_word = a._nextWord;
+  timerTick(team);
 
-  team.currentExplainer = a.nextExplainer._id.toString();
-
-  await team.save();
+  const newRoundNumber = team.currentRound.number + 1;
+  const updateFields = {
+    currentRound: {
+      number: newRoundNumber,
+      isActive: true,
+      current_word: a._nextWord,
+    },
+    currentExplainer: a.nextExplainer._id.toString(),
+  };
+  console.log(team._id.toString());
+  ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
 
   return team;
+};
+
+const timerTick = (team) => {
+  const io = getIO();
+  const ge = getGameEmitter();
+  const teamId = team._id.toString();
+
+  let roundTime = 5; //team.game.settings.round_time;
+
+  const interval = 1000; // 1 second
+
+  (async function () {
+    for await (const step of setInterval(interval, Date.now())) {
+      // confusing ^^
+      io.to(teamId).emit("roundTimerTick", { remaining: roundTime }); // timer updates
+      roundTime -= 1;
+      if (roundTime <= 0) {
+        io.to(teamId).emit("roundEnded", { round: team.currentRound, teamId });
+        break;
+      }
+
+      ge.emit("updateTeam", { teamId: teamId, updateFields: { currentRound: { isActive: false } } });
+    }
+  })();
+  return interval;
 };

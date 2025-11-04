@@ -31,7 +31,7 @@ exports.getTeamById = async (teamId) => {
 };
 
 exports.getTeamByIdForRound = async (teamId) => {
-  const team = await TeamModel.findById(teamId); //.populate("currentExplainer").populate("currentRound").populate("player_list");
+  const team = await TeamModel.findById(teamId).populate("game"); //.populate("currentExplainer").populate("currentRound").populate("player_list");
 
   if (!team) {
     throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");

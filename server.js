@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const { createServer } = require("node:http");
 
 const { initSocket } = require("./socketManager");
+const { setupGameLoop } = require("./listeners/gameLoopListener");
 
 const httpServer = createServer(app);
 
@@ -21,6 +22,7 @@ async function startServer() {
     module.exports = httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+    setupGameLoop();
   } catch (error) {
     console.error("MongoDB connection error:", error);
     process.exit(1);

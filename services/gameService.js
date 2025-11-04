@@ -1,17 +1,13 @@
 const { GameModel, TeamModel } = require("../models");
-const { createTeam } = require("./teamService");
-const { HttpError, generateVocabulary } = require("../utils");
+const { createTeam, getTeamByIdForRound } = require("./teamService");
+const { HttpError, generateVocabulary, TEAM_STATUS } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const { getOnlineUsers } = require("../socketManager"); // websocket users map
-const { emitGameNotification } = require("./clientTest");
-const TEAM_STATUS = require("../utils/constants");
 const { nextRound } = require("./logicGameService");
 
 // to get all games
 exports.getAllGames = async () => {
-  return await GameModel.find()
-    .populate("admin", "username email")
-    .populate("teams", "name team_score player_list");
+  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list");
 };
 
 // to get a game by id
@@ -57,7 +53,6 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   await team1.save();
   await team2.save();
 
-  emitGameNotification(game._id, `Game "${game.name}" has been created!`);
   return game;
 };
 
@@ -74,7 +69,8 @@ exports.startGameForTeam = async (gameId, teamId) => {
   }
 
   // update team vocabulary before game start
-  const team = await TeamModel.findById(teamId).populate("player_list");
+  const team = await getTeamByIdForRound(teamId);
+  //const team = await TeamModel.findById(teamId).populate("player_list");
   team.word_vocabulary = game.word_vocabulary;
   // team.save();
 
@@ -95,22 +91,21 @@ exports.startGameForTeam = async (gameId, teamId) => {
   //   gameOver(team);
   // }
   if (userCount < minUsers) {
-    emitGameNotification(game._id, `Not enough players online to start the game.`);
     return team;
   }
 
-  nextRound(teamId);
-  emitGameNotification(game._id, `Team ${team.name} started the game!`);
+  nextRound(team);
 
   return team;
 };
 
 exports.gameOver = async (teamModel) => {
   teamModel.team_score = 0;
-  teamModel.status = "ended";
+  teamModel.status = TEAM_STATUS.ENDED;
   teamModel.player_list = [];
   await teamModel.save();
 };
+
 //End the current round
 
 exports.endRound = async (gameId) => {
@@ -123,11 +118,8 @@ exports.endRound = async (gameId) => {
   game.currentRound.number = (game.currentRound.number || 1) + 1;
 
   await game.save();
-
-  emitGameNotification(game._id, `Round ${game.currentRound.number} ended.`);
   return game;
 };
-
 
 // end the game
 exports.endGame = async (gameId) => {
@@ -142,11 +134,6 @@ exports.endGame = async (gameId) => {
   );
 
   const winner = scores.reduce((a, b) => (a.score > b.score ? a : b));
-
-  emitGameNotification(
-    game._id,
-    `Game "${game.name}" ended! Winner: ${winner.team} (${winner.score} points)`
-  );
 
   // cleanup
   for (const tId of game.teams) {
@@ -171,9 +158,7 @@ exports.endGame = async (gameId) => {
 // delete a game
 exports.deleteGame = async (id) => {
   const deleted = await GameModel.findByIdAndDelete(id);
-  if (deleted) {
-    emitGameNotification(deleted._id, `Game "${deleted.name}" has been deleted.`);
-  }
+
   return deleted;
 };
 
