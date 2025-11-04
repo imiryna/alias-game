@@ -4,12 +4,14 @@ const { HttpError } = require("../utils");
 
 // to get all users list
 exports.getAllUsers = async () => {
-  return await UserModel.find({}, "-passwordHash");
+  return await UserModel.find({}, "-passwordHash").lean();
 };
 
 // to get a user by id
 exports.getUserById = async (id) => {
-  return await UserModel.findById(id, "-passwordHash");
+  const user = await UserModel.findById(id, "-passwordHash").lean();
+  if (!user) throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
+  return user;
 };
 
 exports.createUser = async (data) => {
