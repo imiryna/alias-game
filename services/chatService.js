@@ -1,6 +1,7 @@
-const { ChatModel, TeamModel} = require("../models");
-const { getIO } = require("../socketManager");
+const { ChatModel, TeamModel } = require("../models");
+const { getIO, getOnlineUsers, getGameEmitter } = require("../socketManager");
 const { checkGuess, isWordTooSimilar } = require("../utils");
+const { getUserById } = require("./userService");
 
 /**
  * Get chat messages by team ID
@@ -43,6 +44,7 @@ exports.createChatForTeam = async (teamId) => {
  */
 exports.createNewMessage = async ({ userId, teamId, message }) => {
   let io = getIO();
+  let ge = getGameEmitter();
   const chat = await ChatModel.findOne({ team_id: teamId });
   if (!chat) throw new Error("Chat not found");
 
@@ -54,27 +56,23 @@ exports.createNewMessage = async ({ userId, teamId, message }) => {
   if (currentRound?.is_active && currentRound?.current_word) {
     if (String(userId) === String(currentExplainer)) {
       const words = message.trim().split(/\s+/).filter(Boolean);
-      const hasSimilarWord = words.some((word) =>
-          isWordTooSimilar(word, team.currentRound.current_word)
-      );
+      const hasSimilarWord = words.some((word) => isWordTooSimilar(word, team.currentRound.current_word));
       if (hasSimilarWord) {
-        io.to(teamId).emit("systemMessage", {
+        // send message back to the explainer only
+        io.to(getOnlineUsers()[userId]).emit("newMessage", {
           message: "Your message is too similar to the word to guess!",
         });
-
         return;
       }
     } else {
       const isCorrect = checkGuess(message, currentRound.current_word);
       if (isCorrect) {
-        io.to(teamId).emit("correctGuess", {
-          message: `User guessed the word: ${currentRound.current_word}`,
-          userId,
+        const messageAuthor = await getUserById(userId);
+        io.to(teamId).emit("newMessage", {
+          message: `${messageAuthor.name} guessed the word: ${currentRound.current_word}`,
         });
         // team score update
-        team.team_score += 1;
-        team.currentRound.is_active = false;
-        await team.save();
+        ge.emit("updateTeam", { teamId: teamId, updateFields: { team_score: team.team_score + 1 } });
 
         return;
       }

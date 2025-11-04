@@ -1,11 +1,8 @@
-const { GameModel } = require("../models");
-const { createTeam } = require("./teamService");
-const { getTeamByIdForRound } = require("./teamService");
+const { GameModel, TeamModel } = require("../models");
+const { createTeam, getTeamByIdForRound } = require("./teamService");
 const { HttpError, generateVocabulary, TEAM_STATUS } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const { getOnlineUsers } = require("../socketManager"); // websocket users map
-const { emitGameNotification } = require("./clientTest");
-const TEAM_STATUS = require("../utils/constants");
 const { nextRound } = require("./logicGameService");
 
 // to get all games
@@ -56,7 +53,6 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   await team1.save();
   await team2.save();
 
-  emitGameNotification(game._id, `Game "${game.name}" has been created!`);
   return game;
 };
 
@@ -95,12 +91,10 @@ exports.startGameForTeam = async (gameId, teamId) => {
   //   gameOver(team);
   // }
   if (userCount < minUsers) {
-    emitGameNotification(game._id, `Not enough players online to start the game.`);
     return team;
   }
 
   nextRound(team);
-  emitGameNotification(game._id, `Team ${team.name} started the game!`); // check it up
 
   return team;
 };
@@ -124,8 +118,6 @@ exports.endRound = async (gameId) => {
   game.currentRound.number = (game.currentRound.number || 1) + 1;
 
   await game.save();
-
-  emitGameNotification(game._id, `Round ${game.currentRound.number} ended.`);
   return game;
 };
 
@@ -142,8 +134,6 @@ exports.endGame = async (gameId) => {
   );
 
   const winner = scores.reduce((a, b) => (a.score > b.score ? a : b));
-
-  emitGameNotification(game._id, `Game "${game.name}" ended! Winner: ${winner.team} (${winner.score} points)`);
 
   // cleanup
   for (const tId of game.teams) {
@@ -168,9 +158,7 @@ exports.endGame = async (gameId) => {
 // delete a game
 exports.deleteGame = async (id) => {
   const deleted = await GameModel.findByIdAndDelete(id);
-  if (deleted) {
-    emitGameNotification(deleted._id, `Game "${deleted.name}" has been deleted.`);
-  }
+
   return deleted;
 };
 
