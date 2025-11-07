@@ -66,15 +66,19 @@ NODE_ENV=development
 
 ### 4. Start the server
 
-```bash
-npm start
-```
+npm run start:dev
 
 The server will be available at:
 
-```
 http://localhost:3000
-```
+
+### 5. Connect with a client:
+
+Example connection as a client see examples/clientTest.js
+
+### 6. Start the client:
+
+node clientTest.js <userId> <teamId>
 
 ---
 
@@ -166,6 +170,25 @@ http://localhost:3000
 - MongoDB connection initialized via `server.js`.
 - Socket.io events are managed in `socketManager.js`.
 - Game automatically ends after **10 rounds**, but can also be ended manually with `/api/game/:id/end`.
+
+---
+
+🐳 Docker Setup & Commands
+⚙️ Overview
+
+This project includes a Dockerfile and a docker-compose.yml to simplify local development and deployment.
+Three services are defined in docker-compose.yml:
+
+Service	Description	Port
+app	Node.js backend (Alias Game API)	3000
+mongo	MongoDB database	27017
+mongo-express	Web UI for MongoDB	8081
+
+All environment variables are managed via .env.
+
+Create and run containers with docker (MongoDB + App):
+
+docker-compose up --build
 
 ---
 
