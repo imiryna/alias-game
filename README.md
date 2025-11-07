@@ -22,6 +22,16 @@ The backend uses **MongoDB** for persistent data storage and **Socket.IO** for r
 
 ---
 
+## Features
+
+- Real-time multiplayer gameplay
+- In-game chat
+- Similar word detection to prevent cheating
+- Round-based game flow
+- Score tracking per team
+
+---
+
 ## 🗂️ Project Structure
 
 ```
@@ -153,6 +163,42 @@ node clientTest.js <userId> <teamId>
 
 ---
 
+## Socket.IO Integration
+
+This project uses **Socket.IO** with an **Express** and **MongoDB** backend to enable real-time communication between users.
+
+- Socket.IO runs on the **same port** as Express (`http://localhost:3000`).
+
+- Always perform user authentication before creating the Socket.IO connection on the client side, to ensure only authorized users can connect and join rooms.
+
+## Overview
+
+- **Express** handles REST API routes (e.g., `/messages`, `/teams/:id`).
+- **Socket.IO** manages real-time events like new messages, user connections, and online status.
+- **MongoDB** stores chats and messages persistently.
+
+## How It Works
+
+1. When a user connects, the server assigns a unique `socket.id`.
+2. Each team has its own **room** identified by `teamId`.
+3. Users join their team room via:
+
+   ```js
+   socket.emit("joinTeam", { userId, teamId });
+   ```
+
+4. Messages are sent in real time:
+
+   ```js
+   socket.emit("sendMessage", { teamId, userId, text });
+   ```
+
+5. The server saves messages to MongoDB and broadcasts them:
+
+   ```js
+   io.to(teamId).emit("newMessage", message);
+   ```
+
 ## 🔌 Socket.IO Events
 
 | Event           | Direction       | Description                                    |
@@ -177,8 +223,7 @@ node clientTest.js <userId> <teamId>
 
 ---
 
-🐳 Docker Setup & Commands
-⚙️ Overview
+## 🐳 Docker Setup & Commands
 
 This project includes a Dockerfile and a docker-compose.yml to simplify local development and deployment.
 Three services are defined in docker-compose.yml:
