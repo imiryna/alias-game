@@ -42,20 +42,20 @@ server.js         → App entry point (HTTP + Socket + MongoDB)
 
 ### 1. Clone the repository
 
-```bash
+```
 git clone https://github.com/your-username/alias-game-backend.git
 cd alias-game-backend
 ```
 
 ### 2. Install dependencies
 
-```bash
+```
 npm install
 ```
 
 ### 3. Create a `.env` file
 
-```bash
+```
 MONGO_USER=root
 MONGO_PASSWORD=example
 MONGO_DB=alias
@@ -64,9 +64,11 @@ PORT=3000
 NODE_ENV=development
 ```
 
-### 4. Start the server
+### 4. Start the server:
 
+```
 npm run start:dev
+```
 
 The server will be available at:
 
@@ -78,7 +80,9 @@ Example connection as a client see examples/clientTest.js
 
 ### 6. Start the client:
 
+```
 node clientTest.js <userId> <teamId>
+```
 
 ---
 
@@ -188,7 +192,9 @@ All environment variables are managed via .env.
 
 Create and run containers with docker (MongoDB + App):
 
+```
 docker-compose up --build
+```
 
 ---
 
