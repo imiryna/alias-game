@@ -235,11 +235,11 @@ Explainers rotate automatically within a team — for each round, the next playe
 
 **6. Can I simulate a full game manually (via Postman)?**  
 Yes. Here’s the sequence:
-1️⃣ Create a game → POST /api/game
-2️⃣ Create two teams → POST /api/team (or via setup logic)
-3️⃣ Join players to each team → POST /api/team/:teamId/join
-4️⃣ Start the game → POST /api/game/startgame
-5️⃣ Send messages (round activity) → Socket event sendMessage or POST /api/chat/send
+- 1️⃣ Create a game → POST /api/game
+- 2️⃣ Create two teams → POST /api/team (or via setup logic)
+- 3️⃣ Join players to each team → POST /api/team/:teamId/join
+- 4️⃣ Start the game → POST /api/game/startgame
+- 5️⃣ Send messages (round activity) → Socket event sendMessage or POST /api/chat/send
 
 **7. Does the game end automatically?**  
 Yes — after 10 rounds, the game stops automatically.
@@ -282,9 +282,9 @@ All errors are unified:
 
 **15. How are chats handled for each team?**
 Each team has its own chat:
-GET /api/chat/:teamId → get message history
-POST /api/chat/:teamId → create a new chat for the team
-POST /api/chat/send → send a message (Socket.IO event is also emitted)
+- GET /api/chat/:teamId → get message history
+- POST /api/chat/:teamId → create a new chat for the team
+- POST /api/chat/send → send a message (Socket.IO event is also emitted)
 💡 All chat routes are protected and available only to authenticated users.
 
 **16. Can multiple games run simultaneously?**  
