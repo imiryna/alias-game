@@ -57,38 +57,23 @@ git clone https://github.com/your-username/alias-game-backend.git
 cd alias-game-backend
 ```
 
-### 2. Install dependencies
+### 2. Copy and rename the file `.env.test`
+
+### 3. Start the server:
 
 ```
-npm install
-```
-
-### 3. Create a `.env` file
-
-```
-MONGO_USER=root
-MONGO_PASSWORD=example
-MONGO_DB=alias
-MONGO_URL_LOCAL=mongodb://127.0.0.1:27017/test
-PORT=3000
-NODE_ENV=development
-```
-
-### 4. Start the server:
-
-```
-npm run start:dev
+docker-compose up --build
 ```
 
 The server will be available at:
 
 http://localhost:3000
 
-### 5. Connect with a client:
+### 4. Connect with a client:
 
 Example connection as a client see examples/clientTest.js
 
-### 6. Start the client:
+### 5. Start the client:
 
 ```
 node clientTest.js <userId> <teamId>
@@ -148,16 +133,6 @@ node clientTest.js <userId> <teamId>
 | GET    | `/:teamId` | Get chat history for a team               |
 | POST   | `/:teamId` | Create chat for a team                    |
 | POST   | `/send`    | Send a message to team chat *(protected)* |
-
----
-
-### 🧠 **Logic Routes** `/api/logic`
-
-| Method | Endpoint              | Description          |
-|--------|-----------------------|----------------------|
-| POST   | `/:teamId/join`       | Join a team          |
-| POST   | `/:teamId/leave`      | Leave a team         |
-| POST   | `/:teamId/next-round` | Start the next round |
 
 ---
 
@@ -235,22 +210,22 @@ All environment variables are managed via .env.
 
 Create and run containers with docker (MongoDB + App):
 
-```
-docker-compose up --build
-```
-
 ---
 
 ## ❓ FAQ
 
 **1. How does the game start?**  
-After creating a game and teams, call `/api/game/startgame`. This initializes the first round and activates the explainer rotation.
+After creating a game (POST /api/game) and teams (POST /api/team), call POST /api/game/startgame.
+This initializes the first round, creates team chats (via /api/chat/:teamId), and activates the explainer rotation for each team.
 
 **2. How do players join a team?**  
-Use `POST /api/logic/:teamId/join`. Once joined, the player is connected to the team room (Socket.IO handles this automatically).
+Use POST /api/team/:teamId/join.
+The server validates the teamId, adds the player to that team, and connects them to the team’s room in Socket.IO.
+All team members receive a real-time update when someone joins.
 
 **3. What happens when a player leaves a team?**  
-Use `POST /api/logic/:teamId/leave`. The server removes the player from that team and broadcasts a `userOffline` event.
+Use POST /api/team/:teamId/leave.
+The backend removes the player from that team and emits a userOffline event to other connected teammates.
 
 **4. How do rounds work?**  
 Each round lasts for a fixed time (e.g. 60 seconds). When time is up, the server emits a `systemMessage` about the round ending, and the next team/explainer is activated.
@@ -259,16 +234,15 @@ Each round lasts for a fixed time (e.g. 60 seconds). When time is up, the server
 Explainers rotate automatically within a team — for each round, the next player becomes the explainer. This ensures balanced participation.
 
 **6. Can I simulate a full game manually (via Postman)?**  
-Yes:  
-1️⃣ Create a game → `POST /api/game`  
-2️⃣ Create two teams → `POST /api/team`  
-3️⃣ Join players to each team → `POST /api/logic/:teamId/join`  
-4️⃣ Start the game → `POST /api/game/startgame`  
-5️⃣ Send messages during rounds via Socket event `sendMessage`  
-6️⃣ End the game manually → `POST /api/game/:id/end`  
+Yes. Here’s the sequence:
+1️⃣ Create a game → POST /api/game
+2️⃣ Create two teams → POST /api/team (or via setup logic)
+3️⃣ Join players to each team → POST /api/team/:teamId/join
+4️⃣ Start the game → POST /api/game/startgame
+5️⃣ Send messages (round activity) → Socket event sendMessage or POST /api/chat/send
 
 **7. Does the game end automatically?**  
-Yes — after **10 rounds**, the game automatically ends. You can also trigger `/api/game/:id/end` to stop it early.
+Yes — after 10 rounds, the game stops automatically.
 
 **8. How is scoring handled?**  
 Each correct guess adds a point to the team’s score. Points are stored in the Team model and updated at the end of every round.
@@ -288,10 +262,15 @@ ws://localhost:3000
 Then emit `joinTeam` and `sendMessage` events.
 
 **12. How to handle JWT expiration?**  
-Use `/api/auth/refresh` to obtain a new access token when the old one expires.
+When your access token expires, request a new one via:
+POST /api/auth/refresh
+You must include your refresh token in the request body or header, depending on implementation.
 
 **13. Are all endpoints protected?**  
-Only key routes (like `/send`, `/next-round`, `/join`, `/leave`) are protected via `protected` middleware. Public endpoints include `/signup`, `/login`, `/help`.
+Not all — only the key routes require authentication middleware:
+Protected: /api/game, /api/team, /api/user, /api/chat, /api/auth/refresh
+Public: /api/auth/signup, /api/auth/login, /help
+Authentication is handled via the custom protected middleware that verifies JWT.
 
 **14. How are errors returned?**  
 All errors are unified:
@@ -301,11 +280,18 @@ All errors are unified:
 }
 ```
 
-**15. Can multiple games run simultaneously?**  
+**15. How are chats handled for each team?**
+Each team has its own chat:
+GET /api/chat/:teamId → get message history
+POST /api/chat/:teamId → create a new chat for the team
+POST /api/chat/send → send a message (Socket.IO event is also emitted)
+💡 All chat routes are protected and available only to authenticated users.
+
+**16. Can multiple games run simultaneously?**  
 Yes, each game instance is isolated by its ID and has its own set of teams and chat rooms.
 
 ---
 
 ## 🧩 License
 
-MIT © Alias-Game Backend Team
+MIT © Alias-Game Solvd. Backend Team
