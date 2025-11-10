@@ -114,7 +114,6 @@ node clientTest.js <userId> <teamId>
 |--------|--------------|-----------------------------|
 | GET    | `/`          | Get all users               |
 | GET    | `/:id`       | Get a user by ID            |
-| PATCH  | `/:id/stats` | Update user statistics      |
 | DELETE | `/:id`       | Delete user                 |
 
 ---
@@ -126,20 +125,19 @@ node clientTest.js <userId> <teamId>
 | POST   | `/`          | Create a new game         |
 | GET    | `/`          | Get all games             |
 | GET    | `/:id`       | Get game by ID            |
-| POST   | `/:id/end`   | End the game manually     |
 | POST   | `/startgame` | Start the game for teams  |
 
 ---
 
 ### 🧑‍🤝‍🧑 **Team Routes** `/api/team`
 
-| Method | Endpoint | Description       |
-|--------|----------|-------------------|
-| POST   | `/`      | Create a new team |
-| GET    | `/`      | Get all teams     |
-| GET    | `/:id`   | Get team by ID    |
-| PATCH  | `/:id`   | Update team info  |
-| DELETE | `/:id`   | Delete team       |
+| Method | Endpoint             | Description     |
+|--------|----------------------|---------------  |
+| POST   | `/:teamId/join`      | Join the team   |
+| POST   | `/:teamId/leave`     | Leave the team  |
+| POST   | `/:teamId/next-round`| Next team round |
+| GET    | `/:id`               | Get team by ID  |
+| DELETE | `/:id`               | Delete team     |
 
 ---
 
