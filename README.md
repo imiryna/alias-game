@@ -1,13 +1,13 @@
-# 🧩 Alias-Game Backend
+#  Alias-Game Backend
 
-### 📄 Overview  
+###  Overview  
 **Alias-Game Backend** is a **Node.js + Express + Socket.IO** server for a multiplayer word-guessing game inspired by *Alias*.  
 It handles **user authentication**, **game logic**, **team and chat management**, and **real-time gameplay synchronization**.  
 The backend uses **MongoDB** for persistent data storage and **Socket.IO** for real-time communication between players.
 
 ---
 
-## ⚙️ Tech Stack
+## Tech Stack
 
 - **Runtime:** Node.js  
 - **Framework:** Express.js  
@@ -32,7 +32,7 @@ The backend uses **MongoDB** for persistent data storage and **Socket.IO** for r
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 /controllers      → Request handlers for routes
@@ -48,7 +48,7 @@ server.js         → App entry point (HTTP + Socket + MongoDB)
 
 ---
 
-## ⚡ Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the repository
 
@@ -81,9 +81,9 @@ node clientTest.js <userId> <teamId>
 
 ---
 
-## 📡 API Documentation
+## API Documentation
 
-### 🔐 **Auth Routes** `/api/auth`
+### **Auth Routes** `/api/auth`
 
 | Method | Endpoint   | Description                       |
 |--------|-------------|-----------------------------------|
@@ -93,7 +93,7 @@ node clientTest.js <userId> <teamId>
 
 ---
 
-### 👥 **User Routes** `/api/user`
+### **User Routes** `/api/user`
 
 | Method | Endpoint     | Description                 |
 |--------|--------------|-----------------------------|
@@ -103,7 +103,7 @@ node clientTest.js <userId> <teamId>
 
 ---
 
-### 🎮 **Game Routes** `/api/game`
+### **Game Routes** `/api/game`
 
 | Method | Endpoint     | Description               |
 |--------|--------------|---------------------------|
@@ -114,7 +114,7 @@ node clientTest.js <userId> <teamId>
 
 ---
 
-### 🧑‍🤝‍🧑 **Team Routes** `/api/team`
+### **Team Routes** `/api/team`
 
 | Method | Endpoint             | Description     |
 |--------|----------------------|---------------  |
@@ -126,7 +126,7 @@ node clientTest.js <userId> <teamId>
 
 ---
 
-### 💬 **Chat Routes** `/api/chat`
+### **Chat Routes** `/api/chat`
 
 | Method | Endpoint   | Description                               |
 |--------|------------|-------------------------------------------|
@@ -172,7 +172,7 @@ This project uses **Socket.IO** with an **Express** and **MongoDB** backend to e
    io.to(teamId).emit("newMessage", message);
    ```
 
-## 🔌 Socket.IO Events
+## Socket.IO Events
 
 | Event           | Direction       | Description                                    |
 |-----------------|-----------------|------------------------------------------------|
@@ -186,7 +186,7 @@ This project uses **Socket.IO** with an **Express** and **MongoDB** backend to e
 
 ---
 
-## 🧠 Developer Notes
+## Developer Notes
 
 - All async routes are wrapped in `catchAsync`.
 - JWT-based authentication with middleware `protected`.
@@ -196,7 +196,7 @@ This project uses **Socket.IO** with an **Express** and **MongoDB** backend to e
 
 ---
 
-## 🐳 Docker Setup & Commands
+## Docker Setup & Commands
 
 This project includes a Dockerfile and a docker-compose.yml to simplify local development and deployment.
 Three services are defined in docker-compose.yml:
@@ -212,7 +212,7 @@ Create and run containers with docker (MongoDB + App):
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 **1. How does the game start?**  
 After creating a game (POST /api/game) and teams (POST /api/team), call POST /api/game/startgame.
@@ -285,13 +285,13 @@ Each team has its own chat:
 - GET /api/chat/:teamId → get message history
 - POST /api/chat/:teamId → create a new chat for the team
 - POST /api/chat/send → send a message (Socket.IO event is also emitted)
-💡 All chat routes are protected and available only to authenticated users.
+All chat routes are protected and available only to authenticated users.
 
 **16. Can multiple games run simultaneously?**  
 Yes, each game instance is isolated by its ID and has its own set of teams and chat rooms.
 
 ---
 
-## 🧩 License
+## License
 
 MIT © Alias-Game Solvd. Backend Team
