@@ -1,8 +1,21 @@
-const { HttpError, getNextExplainer, pickRandomWord } = require("../utils");
+const { HttpError, getNextExplainer, pickRandomWord, TEAM_STATUS } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const gameService = require("./gameService");
-const { getTeamById } = require("./teamService");
-const { getIO, getGameEmitter } = require("../socketManager");
+const { getTeamById, getTeamByIdForRound } = require("./teamService");
+const { getGameEmitter, getOnlineUsers } = require("../events/gameEmitter");
+
+const { setInterval } = require("timers/promises");
+
+const gameOver = async (teamModel) => {
+  teamModel.team_score = 0;
+  teamModel.currentRound.number = 0;
+  teamModel.status = TEAM_STATUS.ENDED;
+  teamModel.player_list = [];
+  await teamModel.save();
+
+  const ge = getGameEmitter();
+  ge.emit("game:over", { teamId: teamModel._id.toString() });
+};
 
 // Checking that the team is not already on another team in this game
 const isTeamExist = async (teamId) => {
@@ -25,13 +38,25 @@ exports.joinTeam = async (teamId, userId) => {
   }
 
   team.player_list.push(userId);
+
+  if (team.player_list.length === 5) {
+    team.isFull = true;
+  }
   await team.save();
 
   return team;
 };
 
-exports.leftTeam = async (teamId, userId) => {
-  const io = getIO();
+exports.leftTeam = async (teamId, userId, socketId = null) => {
+  const ge = getGameEmitter();
+  const allUsers = getOnlineUsers();
+
+  if (!userId) {
+    for (const [user_id, id] of allUsers.entries()) {
+      if (id === socketId) userId = user_id;
+    }
+  }
+
   const team = await getTeamById(teamId);
   if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team is not exist");
 
@@ -42,7 +67,9 @@ exports.leftTeam = async (teamId, userId) => {
     team.currentExplainer = null;
     await team.save();
   }
-  io.to(team._id.toString()).emit("userLeft", { userId });
+  // io.to(team._id.toString()).emit("userLeft", { userId });
+
+  ge.emit("team:playerLeft", { teamId, userId });
 
   return team.populate("player_list");
 };
@@ -58,7 +85,10 @@ const nextWord = async (team) => {
   return { nextExplainer, _nextWord };
 };
 
-exports.nextRound = async (team) => {
+const innerNextRound = async (teamId) => {
+  const team = await getTeamByIdForRound(teamId);
+  const currentRound = team.currentRound.number;
+
   const ge = getGameEmitter();
   if (!Array.isArray(team.player_list) || team.player_list.length === 0) {
     throw new HttpError(StatusCodes.NOT_FOUND, "No players in team");
@@ -66,44 +96,62 @@ exports.nextRound = async (team) => {
 
   let a = await nextWord(team);
 
-  timerTick(team);
+  const socketId = getOnlineUsers().get(a.nextExplainer._id.toString());
+  ge.emit("chat:newExplainer", { teamId: team._id.toString(), explainer: socketId, word: a._nextWord });
 
-  const newRoundNumber = team.currentRound.number + 1;
-  const updateFields = {
-    currentRound: {
-      number: newRoundNumber,
-      isActive: true,
-      current_word: a._nextWord,
-    },
-    currentExplainer: a.nextExplainer._id.toString(),
-  };
-  console.log(team._id.toString());
-  ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
+  // Check if rounds off - game over
+  if (currentRound <= 3) {
+    //team.game.settings.round_amount) {
+    timerTick(team);
 
+    const newRoundNumber = team.currentRound.number + 1;
+    const updateFields = {
+      currentRound: {
+        number: newRoundNumber,
+        isActive: true,
+        current_word: a._nextWord,
+      },
+      currentExplainer: a.nextExplainer,
+    };
+    ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
+  } else {
+    await gameOver(team);
+  }
   return team;
 };
 
 const timerTick = (team) => {
-  const io = getIO();
+  // const io = getIO();
   const ge = getGameEmitter();
   const teamId = team._id.toString();
-
+  // TODO remove hardcode
   let roundTime = 5; //team.game.settings.round_time;
 
   const interval = 1000; // 1 second
 
   (async function () {
     for await (const step of setInterval(interval, Date.now())) {
-      // confusing ^^
-      io.to(teamId).emit("roundTimerTick", { remaining: roundTime }); // timer updates
+      console.log(step);
+
+      ge.emit("team:roundTimerTick", { teamId, remaining: roundTime });
       roundTime -= 1;
       if (roundTime <= 0) {
-        io.to(teamId).emit("roundEnded", { round: team.currentRound, teamId });
+        ge.emit("team:roundEnded", { teamId, round: team.currentRound });
+        innerNextRound(team);
         break;
       }
-
-      ge.emit("updateTeam", { teamId: teamId, updateFields: { currentRound: { isActive: false } } });
+      //TODO uncomment
+      //ge.emit("updateTeam", { teamId: teamId, updateFields: { currentRound: { isActive: false } } });
     }
   })();
   return interval;
 };
+
+// const gameOver = async (teamModel) => {
+//   teamModel.team_score = 0;
+//   teamModel.status = TEAM_STATUS.ENDED;
+//   teamModel.player_list = [];
+//   await teamModel.save();
+// };
+
+exports.nextRound = async (teamId) => innerNextRound(teamId);

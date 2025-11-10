@@ -1,8 +1,8 @@
 const { getTeamById } = require("./teamService");
-const { createGame, endRound, startGameForTeam, getAllGames, getGameById } = require("./gameService");
+const { createGame, startGameForTeam, getAllGames, getGameById } = require("./gameService");
 const { signup, login, refresh } = require("./authService");
 const { signToken, checkToken } = require("./jwtService");
-const { checkUserExists, createUser, getUserById, updateUserStats, deleteUser } = require("./userService");
+const { checkUserExists, createUser, getUserById, increaseUserStats, deleteUser } = require("./userService");
 const { joinTeam, leftTeam, nextRound } = require("./logicGameService");
 const { getChatByTeam, createChatForTeam, createNewMessage } = require("./chatService");
 
@@ -16,7 +16,7 @@ module.exports = {
   checkUserExists,
   createUser,
   getUserById,
-  updateUserStats,
+  increaseUserStats,
   deleteUser,
   signup,
   login,
@@ -25,7 +25,6 @@ module.exports = {
   checkToken,
   createGame,
   startGameForTeam,
-  endRound,
   getAllGames,
   getGameById,
   createNewMessage,

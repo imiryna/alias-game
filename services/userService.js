@@ -1,15 +1,14 @@
 const { StatusCodes } = require("http-status-codes");
 const { UserModel } = require("../models");
 const { HttpError } = require("../utils");
+const { getGameEmitter } = require("../events/gameEmitter");
 
-// to get all users list
 exports.getAllUsers = async () => {
-  return await UserModel.find({}, "-passwordHash").lean();
+  return await UserModel.find();
 };
 
-// to get a user by id
 exports.getUserById = async (id) => {
-  const user = await UserModel.findById(id, "-passwordHash").lean();
+  const user = await UserModel.findById(id);
   if (!user) throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
   return user;
 };
@@ -21,23 +20,20 @@ exports.createUser = async (data) => {
 };
 
 // to update user stats
-exports.updateUserStats = async (id, statsData) => {
-  const { gamesPlayed, wins } = statsData;
-
+exports.increaseUserStats = async (id) => {
   const user = await UserModel.findById(id);
+  let ge = getGameEmitter();
+
   if (!user) {
     return null;
   }
-
-  // Update stats fields only
-  if (gamesPlayed !== undefined) user.stats.gamesPlayed = gamesPlayed;
-  if (wins !== undefined) user.stats.wins = wins;
+  user.stat += 1;
+  ge.emit("updateUser", { userId: id, updateFields: { stat: user.stat } });
 
   await user.save();
-  return user.stats;
+  return user.stat;
 };
 
-// to delete a user
 exports.deleteUser = async (id) => {
   return await UserModel.findByIdAndDelete(id);
 };

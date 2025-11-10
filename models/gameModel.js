@@ -21,6 +21,7 @@ const gameSchema = new Schema(
     word_vocabulary: [
       {
         type: String,
+        required: false,
       },
     ],
     settings: {
@@ -38,9 +39,9 @@ const gameSchema = new Schema(
       },
     },
     status: {
-        type: String,
-        enum: ["waiting", "active", "ended"], //all possible states
-        default: "waiting",
+      type: String,
+      enum: ["waiting", "active", "ended"], //all possible states
+      default: "waiting",
     },
   },
   { timestamps: true }

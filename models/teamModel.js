@@ -37,6 +37,10 @@ const teamSchema = new Schema({
     enum: TEAM_STATUS, //all possible states
     default: TEAM_STATUS.WAITING,
   },
+  isFull: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const TeamModel = model("team", teamSchema);

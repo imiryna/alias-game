@@ -1,4 +1,4 @@
-const { HttpError } = require("../utils");
+const { HttpError } = require("./error");
 const { StatusCodes } = require("http-status-codes");
 const WordPOS = require("wordpos");
 
