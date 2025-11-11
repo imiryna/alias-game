@@ -1,5 +1,5 @@
 const { getChatByTeam, createChatForTeam, createNewMessage } = require("../services");
-const { catchAsync, HttpError } = require("../utils");
+const { catchAsync, HttpError } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 
 // to get a chat by team ID

@@ -1,5 +1,5 @@
 const { model, Schema } = require("mongoose");
-const { TEAM_STATUS } = require("../utils");
+const { TEAM_STATUS } = require("./constants");
 
 const teamSchema = new Schema({
   name: {
@@ -45,4 +45,4 @@ const teamSchema = new Schema({
 
 const TeamModel = model("team", teamSchema);
 
-module.exports = TeamModel;
+module.exports = { TeamModel };

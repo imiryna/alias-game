@@ -1,5 +1,5 @@
 const { checkUserExists, checkToken, getUserById } = require("../services");
-const { catchAsync, HttpError } = require("../utils");
+const { catchAsync, HttpError } = require("../helpers");
 const { signupAuthDataValidator, loginAuthDataValidator } = require("./validateAuth");
 const { StatusCodes } = require("http-status-codes");
 

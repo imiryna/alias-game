@@ -1,7 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const { UserModel } = require("../models");
-const { HttpError } = require("../utils");
-const { getGameEmitter } = require("../events/gameEmitter");
+const { HttpError } = require("../helpers");
 
 exports.getAllUsers = async () => {
   return await UserModel.find();
@@ -17,21 +16,6 @@ exports.createUser = async (data) => {
   const newUser = await UserModel.create(data);
 
   return newUser;
-};
-
-// to update user stats
-exports.increaseUserStats = async (id) => {
-  const user = await UserModel.findById(id);
-  let ge = getGameEmitter();
-
-  if (!user) {
-    return null;
-  }
-  user.stat += 1;
-  ge.emit("updateUser", { userId: id, updateFields: { stat: user.stat } });
-
-  await user.save();
-  return user.stat;
 };
 
 /**

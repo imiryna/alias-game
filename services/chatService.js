@@ -1,7 +1,9 @@
 const { ChatModel, TeamModel } = require("../models");
-const { getGameEmitter, getOnlineUsers } = require("../events/gameEmitter");
-const { checkGuess, isWordTooSimilar } = require("../utils");
-const { getUserById, increaseUserStats } = require("./userService");
+const { HttpError } = require("../helpers");
+const { StatusCodes } = require("http-status-codes");
+const { isWordTooSimilar, checkGuess } = require("../utils");
+const { getUserById } = require("./userService");
+const { switchExplainer } = require("./logicGameService");
 
 /**
  * Get chat messages by team ID
@@ -35,65 +37,64 @@ exports.createChatForTeam = async (teamId) => {
 };
 
 /**
- * Create a new message in the chat
+ * Check a new message in the chat
  *
- * @param userId
- * @param teamId
- * @param message
- * @returns {Promise<{text, user, timestamp: Date}>}
- */
-exports.createNewMessage = async ({ userId, teamId, message }) => {
-  let ge = getGameEmitter();
-  // const chat = await ChatModel.findOne({ team_id: teamId });
-  // if (!chat) throw new Error("Chat not found");
-
+//  * @param userId
+//  * @param teamId
+//  * @param message
+//  * @returns {Promise<{text, user, timestamp: Date}>}
+//  */
+exports.checkingMessageFn = async ({ teamId, newMessage }) => {
+  const messagePool = {};
   const team = await TeamModel.findById(teamId);
-  if (!team) throw new Error("Team not found");
+  const user = newMessage.user;
+  const userId = user._id.toString();
+  console.log(String(userId));
+  if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
 
   const { currentExplainer, currentRound } = team;
-
+  console.log(String(currentExplainer));
+  console.log(currentRound);
+  // if game is already started
   if (currentRound?.is_active && currentRound?.current_word) {
+    // if message author is explainer
     if (String(userId) === String(currentExplainer)) {
-      const words = message.trim().split(/\s+/).filter(Boolean);
+      const words = newMessage.text.trim().split(/\s+/).filter(Boolean);
+
       const hasSimilarWord = words.some((word) => isWordTooSimilar(word, team.currentRound.current_word));
       if (hasSimilarWord) {
         // send message back to the explainer only
 
-        //   message: "Your message is too similar to the word to guess!",
-
-        ge.emit("chat:newPMMessage", {
-          socketId: getOnlineUsers()[userId],
+        messagePool["chat:newPMMessage"] = {
+          userId: userId,
           message: "Your message is too similar to the word to guess!",
-        });
-        return;
+        };
       }
     } else {
-      const isCorrect = checkGuess(message, currentRound.current_word);
+      // if the message author not explainer, he guess the words
+      const isCorrect = checkGuess(newMessage.text, currentRound.current_word);
       if (isCorrect) {
         const messageAuthor = await getUserById(userId);
+        messagePool["updateUser"] = { userId, updateFields: { stat: messageAuthor.stat + 1 } };
 
-        increaseUserStats(userId); // update user stats
-
-        ge.emit("chat:sysMessage", {
+        // increaseUserStats(userId); // update user stats
+        messagePool["chat:sysMessage"] = {
           teamId,
           message: `${messageAuthor.name} guessed the word: ${currentRound.current_word}`,
-        });
+        };
 
         // team score update
-        // TODO uncomment
-        //ge.emit("updateTeam", { teamId: teamId, updateFields: { team_score: team.team_score + 1 } });
-
-        return;
+        messagePool["updateTeam"] = {
+          teamId: teamId,
+          updateFields: { team_score: team.team_score + 1 },
+        };
+        switchExplainer(team);
       }
     }
   }
-
-  // const newMessage = { user: userId, text: message, timestamp: new Date() };
-  // chat.messages.push(newMessage);
-  // await chat.save();
-
-  ge.emit("chat:sysMessage", { teamId, message: newMessage });
-  // io.to(teamId).emit("newMessage", newMessage);
-
-  return newMessage;
+  messagePool["chat:newMessage"] = {
+    teamId,
+    message: newMessage,
+  };
+  return messagePool;
 };

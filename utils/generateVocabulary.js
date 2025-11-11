@@ -1,4 +1,4 @@
-const HttpError = require('../utils/error');
+const { HttpError } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 const randomWords = require("random-words");
 
@@ -18,16 +18,4 @@ exports.generateVocabulary = async (roundAmount) => {
   const uniqueWords = [...new Set(words.map((w) => w.toLowerCase()))];
 
   return uniqueWords.slice(0, totalWords);
-};
-
-/**
- * Checks and processes a new message.
- *
- * @param teamId
- * @param userId
- * @param newMessage
- * @returns {Promise<string>}
- */
-exports.checkingMessageFn = async ({ teamId, userId, newMessage }) => {
-  return `>>>>>>> ${newMessage.text} <<<<<<<<<<<`;
 };
