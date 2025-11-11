@@ -13,7 +13,7 @@ The backend uses **MongoDB** for persistent data storage and **Socket.IO** for r
 - **Framework:** Express.js  
 - **Database:** MongoDB + Mongoose  
 - **Real-time:** Socket.IO  
-- **Authentication:** JWT tokens 
+- **Authentication:** jsonwebtoken
 - **Deployment:** Docker
 - **Linting & Formatting:** ESLint, Prettier  
 - **Version Control:** Git, GitHub  
@@ -37,6 +37,7 @@ The backend uses **MongoDB** for persistent data storage and **Socket.IO** for r
 ```
 /controllers      → Request handlers for routes
 /routes           → API route definitions
+/event            → Node.js out of the box EventEmitter
 /services         → Business logic & database operations
 /models           → Mongoose schemas
 /utils            → Helpers (error handling, async wrapper)
@@ -196,6 +197,27 @@ This project uses **Socket.IO** with an **Express** and **MongoDB** backend to e
 
 ---
 
+## Node EventEmitter Events
+
+| Event Name         | Direction        | Description                                                                  |
+|--------------------|------------------|------------------------------------------------------------------------------|
+| `updateTeam`       | internal event   | Updates a team document in the database with provided fields.                |
+| `userUpdate`       | internal event   | Updates a user document in the database with new values.                     |
+| `io:connect`       | system event     | Fired when a user connects — stores the user’s socket ID in `onlineUsers`.   |
+| `io:disconnect`    | system event     | Fired when a user disconnects — removes them from `onlineUsers` map.         |
+| `chat:preCheck`    | internal event   | Runs pre-check logic on a new chat message before broadcasting.              |
+| `chat:newMessage`  | emitted event    | Emitted after message validation — triggers sending the processed message.   |
+
+
+## Notes
+
+- All these events are managed inside **`gameEmitter`**, defined in `utils/gameEmitter.js` (or similar file in your project).  
+- `gameEmitter` acts as a **singleton**, coordinating internal state updates and communication between different modules (teams, users, chat, sockets).  
+- These events are used **server-side only**, not visible to frontend clients.  
+- Socket.IO events are built **on top** of these internal events to synchronize updates with connected clients.
+
+---
+
 ## Docker Setup & Commands
 
 This project includes a Dockerfile and a docker-compose.yml to simplify local development and deployment.
@@ -224,11 +246,16 @@ The server validates the teamId, adds the player to that team, and connects them
 All team members receive a real-time update when someone joins.
 
 **3. What happens when a player leaves a team?**  
-Use POST /api/team/:teamId/leave.
-The backend removes the player from that team and emits a userOffline event to other connected teammates.
+When a player leaves a team using POST /api/logic/:teamId/leave,
+the backend removes the player from that team and emits a playerLeft event (via the internal gameEmitter) to update the game state for other teammates.
 
 **4. How do rounds work?**  
-Each round lasts for a fixed time (e.g. 60 seconds). When time is up, the server emits a `systemMessage` about the round ending, and the next team/explainer is activated.
+Each round lasts for a fixed time (e.g. 60 seconds).
+When the timer ends, the server emits a systemMessage that includes:
+- The end of the current round,
+- The next team and explainer who will play,
+- The guessed word or current game status.
+After that, the next round automatically starts with the new explainer and word.
 
 **5. How is the explainer chosen?**  
 Explainers rotate automatically within a team — for each round, the next player becomes the explainer. This ensures balanced participation.
@@ -254,7 +281,9 @@ Active games and team states are stored in MongoDB, so they can be restored when
 Yes — all messages are saved in the `Chat` collection with timestamps and team references.
 
 **11. How to test Socket.IO locally?**  
-You can connect via the Socket.IO client or use Postman’s WebSocket feature.  
+You can connect via the Socket.IO client or use Postman’s WebSocket feature.
+Alternatively, you can run the example client — aliasClient_v2.js located in the /examples directory — to test game events and socket interactions locally. 
+
 Example:
 ```
 ws://localhost:3000
