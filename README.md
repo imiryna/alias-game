@@ -234,6 +234,15 @@ Create and run containers with docker (MongoDB + App):
 
 ---
 
+## Security
+- All sensitive routes are protected with JWT authentication.
+- Input validation is performed on all incoming requests to prevent injection attacks.
+- Error handling middleware captures and logs errors without exposing sensitive information.
+- Passwords are hashed using bcrypt before storage in the database.
+- Environment variables are used to manage sensitive configuration data.
+
+---
+
 ## FAQ
 
 **1. How does the game start?**  

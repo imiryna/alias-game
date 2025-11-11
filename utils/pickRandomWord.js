@@ -15,7 +15,6 @@ exports.pickRandomWord = (teamModel) => {
   const word = teamModel.word_vocabulary[randomIndex];
 
   teamModel.word_vocabulary.splice(randomIndex, 1);
-  // teamModel.save();
 
   return word;
 };

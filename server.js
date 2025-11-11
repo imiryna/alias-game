@@ -12,7 +12,7 @@ const httpServer = createServer(app);
 initSocket(httpServer);
 
 const PORT = process.env.PORT || 3000;
-const mongoUrl = process.env.MONGO_URL_LOCAL;
+const mongoUrl = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongo:27017/${process.env.MONGO_DB}?authSource=admin`;
 
 async function startServer() {
   try {
