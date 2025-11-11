@@ -211,7 +211,7 @@ This project uses **Socket.IO** with an **Express** and **MongoDB** backend to e
 
 ## Notes
 
-- All these events are managed inside **`gameEmitter`**, defined in `utils/gameEmitter.js` (or similar file in your project).  
+- All these events are managed inside **`gameEmitter`**, defined in `events/gameEmitter.js` (or similar file in your project).  
 - `gameEmitter` acts as a **singleton**, coordinating internal state updates and communication between different modules (teams, users, chat, sockets).  
 - These events are used **server-side only**, not visible to frontend clients.  
 - Socket.IO events are built **on top** of these internal events to synchronize updates with connected clients.
