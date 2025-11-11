@@ -1,7 +1,9 @@
 const { signup, login, refresh } = require("./authController");
-const { createGame, getAllGames, getGameById, endRound, startRound, endGame,startGameForTeam } = require("./gameController");
+const { createGame, getAllGames, getGameById, startGame } = require("./gameController");
 const { joinTheTeam, leftTheTeam, nextTeamRound } = require("./logicGameController");
 const { getChatByTeam, createChatForTeam, sendMessageToTeam } = require("./chatController");
+const { getAllUsers, getUserById, updatedUserStats, deleteUser } = require("./userController");
+const { getAllTeams, getTeamById, deleteTeam } = require("./teamController");
 
 module.exports = {
   signup,
@@ -9,15 +11,19 @@ module.exports = {
   refresh,
   createGame,
   getAllGames,
-  endGame,
   getGameById,
-  endRound,
-  startRound,
+  getAllUsers,
+  getUserById,
+  updatedUserStats,
+  deleteUser,
   joinTheTeam,
   leftTheTeam,
   nextTeamRound,
+  getAllTeams,
+  getTeamById,
+  deleteTeam,
   getChatByTeam,
   createChatForTeam,
   sendMessageToTeam,
-  startGameForTeam,
+  startGame,
 };

@@ -7,7 +7,6 @@ const gameRoutes = require("./routes/gameRoutes");
 const teamRoutes = require("./routes/teamRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const authRoutes = require("./routes/authRoutes");
-const logicGameRoutes = require("./routes/logicGameRoutes");
 
 require("dotenv").config();
 
@@ -31,7 +30,6 @@ app.use("/api/game", gameRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/logic", logicGameRoutes);
 
 app.use((_, res) => {
   res.status(404).json({ message: "Not found" });

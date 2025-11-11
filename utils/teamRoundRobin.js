@@ -10,7 +10,8 @@ exports.getNextExplainer = (players, currentExplainer) => {
   } else {
     const nextIndex = playersIndexs.indexOf(currentExplainer._id.toString());
     explainerIndex = (nextIndex + 1) % playersIndexs.length;
+    explainer = players[explainerIndex];
   }
-  explainer = players[explainerIndex];
+
   return explainer;
 };

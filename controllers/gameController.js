@@ -1,12 +1,11 @@
-const { createGame, getAllGames, getGameById, startGameForTeam, endRound, endGame, getFreeGamesOrCreateOne } = require("../services");
+const { createGame, getAllGames, getGameById, startGameForTeam, getFreeGamesOrCreateOne } = require("../services");
 const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
 exports.createGame = catchAsync(async (req, res) => {
   const { name, settings } = req.body;
-  const adminId = req.user?._id;
 
-  const newGame = await createGame({ name, adminId, settings });
+  const newGame = await createGame({ name, settings });
 
   res.status(StatusCodes.CREATED).json({
     message: "Success",
@@ -39,17 +38,6 @@ exports.startGame = catchAsync(async (req, res) => {
   });
 });
 
-// end the current round
-exports.endRound = catchAsync(async (req, res) => {
-  const { gameId } = req.body;
-  const game = await endRound(gameId);
-
-  res.status(StatusCodes.OK).json({
-    message: "Round ended",
-    currentRound: game.currentRound,
-  });
-});
-
 // get a free game or create one
 exports.getFreeGamesOrCreateOne = catchAsync(async (req, res) => {
   const adminId = req.user?._id;
@@ -60,15 +48,3 @@ exports.getFreeGamesOrCreateOne = catchAsync(async (req, res) => {
     game,
   });
 });
-
-exports.endGame = catchAsync(async (req, res) => {
-  const { gameId } = req.body;
-  const game = await endGame(gameId);
-
-  res.status(StatusCodes.OK).json({
-    message: "Game ended",
-    game,
-  });
-});   
-
-

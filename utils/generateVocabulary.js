@@ -1,4 +1,4 @@
-const { HttpError } = require("../utils");
+const { HttpError } = require("./error");
 const { StatusCodes } = require("http-status-codes");
 const WordPOS = require("wordpos");
 
@@ -22,4 +22,8 @@ exports.generateVocabulary = async (roundAmount) => {
   const uniqueWords = [...new Set(words.map((w) => w.toLowerCase()))];
 
   return uniqueWords.slice(0, totalWords);
+};
+
+exports.checkingMessageFn = async ({ teamId, userId, newMessage }) => {
+  return `>>>>>>> ${newMessage.text} <<<<<<<<<<<`;
 };

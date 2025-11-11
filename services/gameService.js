@@ -1,13 +1,16 @@
-const { GameModel, TeamModel } = require("../models");
+const { GameModel } = require("../models");
 const { createTeam, getTeamByIdForRound } = require("./teamService");
-const { HttpError, generateVocabulary, TEAM_STATUS } = require("../utils");
+const { createChatForTeam } = require("./chatService");
+const { HttpError, generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
-const { getOnlineUsers } = require("../socketManager"); // websocket users map
+const { getOnlineUsers } = require("../events/gameEmitter"); // websocket users map
 const { nextRound } = require("./logicGameService");
+const { generateSlug } = require("random-word-slugs");
+const { getGameEmitter } = require("../events/gameEmitter");
 
 // to get all games
 exports.getAllGames = async () => {
-  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list");
+  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list isFull");
 };
 
 // to get a game by id
@@ -16,7 +19,7 @@ exports.getGameById = async (id) => {
     .populate("admin", "username email")
     .populate({
       path: "teams",
-      select: "name team_score player_list",
+      select: "name team_score player_list isFull",
       populate: {
         path: "player_list",
         select: "username name",
@@ -24,12 +27,18 @@ exports.getGameById = async (id) => {
     });
 
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
+
   return game;
 };
 
 // to create a new game
-exports.createGame = async ({ name, adminId, settings = {} }) => {
-  if (!name) throw new HttpError(StatusCodes.BAD_REQUEST, "Game name is required");
+exports.createGame = async ({ name, settings = {} }) => {
+  if (!name) {
+    name = generateSlug()
+      .split("-")
+      .map((word) => word[0].toUpperCase() + word.slice(1))
+      .join(" ");
+  }
 
   // the checking of default team name is in createTeam
   const team1 = await createTeam();
@@ -39,9 +48,12 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
   const wordAmount = settings.word_amount || 10;
   const vocabulary = await generateVocabulary(wordAmount);
 
+  // Creat chat for teams
+  await createChatForTeam(team1._id);
+  await createChatForTeam(team2._id);
+
   const game = await GameModel.create({
     name,
-    admin: adminId,
     teams: [team1._id, team2._id],
     settings: { ...settings, round_amount: roundAmount, word_amount: wordAmount },
     word_vocabulary: vocabulary,
@@ -58,6 +70,8 @@ exports.createGame = async ({ name, adminId, settings = {} }) => {
 
 // Start a game for given team
 exports.startGameForTeam = async (gameId, teamId) => {
+  const ge = getGameEmitter();
+
   const game = await GameModel.findById(gameId);
   if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
 
@@ -70,9 +84,8 @@ exports.startGameForTeam = async (gameId, teamId) => {
 
   // update team vocabulary before game start
   const team = await getTeamByIdForRound(teamId);
-  //const team = await TeamModel.findById(teamId).populate("player_list");
+
   team.word_vocabulary = game.word_vocabulary;
-  // team.save();
 
   if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
 
@@ -82,77 +95,18 @@ exports.startGameForTeam = async (gameId, teamId) => {
   let onlinUsers = getOnlineUsers().keys();
   onlinUsers = Array.from(onlinUsers);
   const minUsers = 2;
-  let intersection = users.filter((e) => onlinUsers.includes(e.id));
+  let intersection = users.filter((e) => onlinUsers.includes(e.toString()));
 
   const userCount = intersection.length;
 
-  //TODO stop everything when game over. Not going foeward
-  // if (userCount < minUsers) {
-  //   gameOver(team);
-  // }
   if (userCount < minUsers) {
+    ge.emit("chat:sysMessage", { teamId, message: "Game cannot start — not enough players! " });
     return team;
   }
 
-  nextRound(team);
+  nextRound(teamId);
 
   return team;
-};
-
-exports.gameOver = async (teamModel) => {
-  teamModel.team_score = 0;
-  teamModel.status = TEAM_STATUS.ENDED;
-  teamModel.player_list = [];
-  await teamModel.save();
-};
-
-//End the current round
-
-exports.endRound = async (gameId) => {
-  const game = await GameModel.findById(gameId);
-  if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
-
-  game.currentRound.is_active = false;
-  game.currentRound.current_word = null;
-  game.currentRound.active_team = null;
-  game.currentRound.number = (game.currentRound.number || 1) + 1;
-
-  await game.save();
-  return game;
-};
-
-// end the game
-exports.endGame = async (gameId) => {
-  const game = await GameModel.findById(gameId).populate("teams");
-  if (!game) throw new HttpError(StatusCodes.NOT_FOUND, "Game not found");
-
-  const scores = await Promise.all(
-    game.teams.map(async (tId) => {
-      const t = await TeamModel.findById(tId);
-      return { team: t.name, score: t.team_score };
-    })
-  );
-
-  const winner = scores.reduce((a, b) => (a.score > b.score ? a : b));
-
-  // cleanup
-  for (const tId of game.teams) {
-    const team = await TeamModel.findById(tId);
-    if (team) {
-      team.player_list = [];
-      team.status = TEAM_STATUS.ENDED;
-      team.currentRound = { number: 0, current_word: null, is_active: false };
-      await team.save();
-    }
-  }
-
-  game.status = TEAM_STATUS.ENDED;
-  await game.save();
-
-  return {
-    message: `Game ended. Winner: ${winner.team}`,
-    scores,
-  };
 };
 
 // delete a game
@@ -165,5 +119,9 @@ exports.deleteGame = async (id) => {
 // check if a player is in a game
 exports.isPlayerInGame = async (gameId, userId) => {
   const game = await this.getGameById(gameId);
-  return game.teams.some((team) => team.player_list.includes(userId));
+  let allUsersInGame = [];
+  game.teams.forEach((t) => console.log(t.player_list));
+  game.teams.forEach((t) => t.player_list.forEach((p) => allUsersInGame.push(p._id.toString())));
+  const inGame = allUsersInGame.includes(userId);
+  return inGame;
 };

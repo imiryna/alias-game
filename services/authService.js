@@ -8,9 +8,16 @@ const { StatusCodes } = require("http-status-codes");
 
 // helper for hashing
 const hashPassword = (password) => {
-  const salt = process.env.BCRYPT_SALT;
+  const saltGenerate = process.env.BCRYPT_SALT;
+  const salt = bcrypt.genSaltSync(Number(saltGenerate));
   return bcrypt.hashSync(password, salt);
 };
+
+/**
+ * signup
+ * @param {*} data
+ * @returns{object} user
+ */
 
 exports.signup = async (data) => {
   const hash = hashPassword(data.password);
@@ -21,17 +28,18 @@ exports.signup = async (data) => {
     password: hash,
   });
 
-  const { accessToken, refreshToken } = signToken(newUser._id);
-  newUser.token = accessToken;
-  newUser.refreshToken = refreshToken;
   await newUser.save();
 
   newUser.password = undefined;
 
-  return { user: newUser, accessToken, refreshToken };
+  return { user: newUser };
 };
 
-//login
+/**  login
+ * @param {string} email
+ * @param {string} password
+ * @return {object} user
+ */
 
 exports.login = async ({ email, password }) => {
   const user = await UserModel.findOne({ email }).select("+password");

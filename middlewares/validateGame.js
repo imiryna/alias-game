@@ -1,23 +1,18 @@
 const Joi = require("joi");
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 
-const objectId = (value, helpers) => {
-  if (!mongoose.Types.ObjectId.isValid(value)) {
-    return helpers.error("any.invalid");
-  }
-  return value;
-};
+// const objectId = (value, helpers) => {
+//   if (!mongoose.Types.ObjectId.isValid(value)) {
+//     return helpers.error("any.invalid");
+//   }
+//   return value;
+// };
 
 exports.createGameSchema = (data) =>
   Joi.object({
-    name: Joi.string().min(3).max(50).required().messages({
+    name: Joi.string().min(3).max(50).messages({
       "string.empty": "Game name cannot be empty",
       "string.min": "Game name must be at least 3 characters long",
-    }),
-
-    adminId: Joi.string().custom(objectId).required().messages({
-      "any.invalid": "Invalid adminId format",
-      "any.required": "Game must have an adminId",
     }),
 
     settings: Joi.object({

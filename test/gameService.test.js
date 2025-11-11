@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { GameModel } = require("../models");
-const { createGame, startGameForTeam, endRound } = require("../services");
+const { createGame } = require("../services");
 const { generateVocabulary, pickRandomWord } = require("../utils");
 
 jest.mock("../utils/generateVocabulary");
@@ -45,27 +45,5 @@ describe("Game Service", () => {
     expect(game.word_vocabulary.length).toBe(3);
     expect(game.currentRound.is_active).toBe(false);
     expect(game.currentRound.number).toBe(1);
-  });
-
-  test("should start a new round and pick a word", async () => {
-    const teamId = new mongoose.Types.ObjectId();
-    const updatedGame = await startRound(game._id, teamId);
-
-    expect(updatedGame.currentRound.is_active).toBe(true);
-    expect(updatedGame.currentRound.current_word).toBe("dancer");
-    expect(updatedGame.currentRound.active_team.toString()).toBe(teamId.toString());
-    expect(updatedGame.word_vocabulary).toEqual(["game", "book"]);
-  });
-
-  test("should end the current round", async () => {
-    const teamId = new mongoose.Types.ObjectId();
-    await startGameForTeam(game._id, teamId);
-
-    const endedGame = await endRound(game._id);
-
-    expect(endedGame.currentRound.is_active).toBe(false);
-    expect(endedGame.currentRound.current_word).toBeNull();
-    expect(endedGame.currentRound.active_team).toBeNull();
-    expect(endedGame.currentRound.number).toBe(2);
   });
 });

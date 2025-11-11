@@ -1,10 +1,10 @@
-const teamService = require("../services/teamService");
+const { getAllTeams, deleteTeam } = require("../services");
 const { catchAsync } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const { getTeamById } = require("../services");
 
 exports.getAllTeams = catchAsync(async (_req, res) => {
-  const teams = await teamService.getAllTeams();
+  const teams = await getAllTeams();
   res.status(StatusCodes.OK).json(teams);
 });
 
@@ -19,19 +19,9 @@ exports.getTeamById = catchAsync(async (req, res) => {
   });
 });
 
-exports.updateTeam = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const updatedTeam = await teamService.updateTeam(id, req.body);
-
-  res.status(StatusCodes.OK).json({
-    message: "Team updated successfully",
-    team: updatedTeam,
-  });
-});
-
 exports.deleteTeam = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const deletedTeam = await teamService.deleteTeam(id);
+  const deletedTeam = await deleteTeam(id);
 
   res.status(StatusCodes.OK).json({
     message: "Team deleted successfully",
@@ -39,12 +29,12 @@ exports.deleteTeam = catchAsync(async (req, res) => {
   });
 });
 
-exports.chooseNextExplainer = catchAsync(async (req, res) => {
-  const { teamId } = req.params;
-  const team = await teamService.chooseNextExplainer(teamId);
+// exports.chooseNextExplainer = catchAsync(async (req, res) => {
+//   const { teamId } = req.params;
+//   const team = await chooseNextExplainer(teamId);
 
-  res.status(StatusCodes.OK).json({
-    message: "Next explainer chosen",
-    team,
-  });
-});
+//   res.status(StatusCodes.OK).json({
+//     message: "Next explainer chosen",
+//     team,
+//   });
+// });
