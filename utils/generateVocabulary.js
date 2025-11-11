@@ -23,3 +23,7 @@ exports.generateVocabulary = async (roundAmount) => {
 
   return uniqueWords.slice(0, totalWords);
 };
+
+exports.checkingMessageFn = async ({ teamId, userId, newMessage }) => {
+  return `>>>>>>> ${newMessage.text} <<<<<<<<<<<`;
+};

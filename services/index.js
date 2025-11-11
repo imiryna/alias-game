@@ -4,7 +4,7 @@ const { signup, login, refresh } = require("./authService");
 const { signToken, checkToken } = require("./jwtService");
 const { checkUserExists, createUser, getUserById, increaseUserStats, deleteUser } = require("./userService");
 const { joinTeam, leftTeam, nextRound } = require("./logicGameService");
-const { getChatByTeam, createChatForTeam, createNewMessage } = require("./chatService");
+const { getChatByTeam, createChatForTeam, createNewMessage, checkingMessageFn } = require("./chatService");
 
 module.exports = {
   getChatByTeam,
@@ -28,4 +28,5 @@ module.exports = {
   getAllGames,
   getGameById,
   createNewMessage,
+  checkingMessageFn,
 };

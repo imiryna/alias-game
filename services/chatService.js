@@ -44,8 +44,8 @@ exports.createChatForTeam = async (teamId) => {
  */
 exports.createNewMessage = async ({ userId, teamId, message }) => {
   let ge = getGameEmitter();
-  const chat = await ChatModel.findOne({ team_id: teamId });
-  if (!chat) throw new Error("Chat not found");
+  // const chat = await ChatModel.findOne({ team_id: teamId });
+  // if (!chat) throw new Error("Chat not found");
 
   const team = await TeamModel.findById(teamId);
   if (!team) throw new Error("Team not found");
@@ -74,7 +74,7 @@ exports.createNewMessage = async ({ userId, teamId, message }) => {
 
         increaseUserStats(userId); // update user stats
 
-        ge.emit("chat:newMessage", {
+        ge.emit("chat:sysMessage", {
           teamId,
           message: `${messageAuthor.name} guessed the word: ${currentRound.current_word}`,
         });
@@ -88,11 +88,11 @@ exports.createNewMessage = async ({ userId, teamId, message }) => {
     }
   }
 
-  const newMessage = { user: userId, text: message, timestamp: new Date() };
-  chat.messages.push(newMessage);
-  await chat.save();
+  // const newMessage = { user: userId, text: message, timestamp: new Date() };
+  // chat.messages.push(newMessage);
+  // await chat.save();
 
-  ge.emit("chat:newMessage", { teamId, message: newMessage });
+  ge.emit("chat:sysMessage", { teamId, message: newMessage });
   // io.to(teamId).emit("newMessage", newMessage);
 
   return newMessage;

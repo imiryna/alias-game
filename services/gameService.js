@@ -100,7 +100,7 @@ exports.startGameForTeam = async (gameId, teamId) => {
   const userCount = intersection.length;
 
   if (userCount < minUsers) {
-    ge.emit("chat:newMessage", { teamId, message: "Game cannot start — not enough players! " });
+    ge.emit("chat:sysMessage", { teamId, message: "Game cannot start — not enough players! " });
     return team;
   }
 

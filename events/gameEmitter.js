@@ -1,6 +1,7 @@
 const EventEmitter = require("node:events");
 
 const { TeamModel, UserModel } = require("../models");
+const { checkingMessageFn } = require("../utils/");
 
 // singleton instance
 class GameEmitter extends EventEmitter {}
@@ -24,6 +25,12 @@ exports.setupGameLoop = () => {
         onlineUsers.delete(userId);
       }
     }
+  });
+
+  gameEmitter.on("chat:preCheck", async ({ teamId, userId, newMessage }) => {
+    const result = await checkingMessageFn({ teamId, userId, newMessage });
+    newMessage.text = result;
+    gameEmitter.emit("chat:newMessage", { teamId, userId, newMessage }); //
   });
 };
 

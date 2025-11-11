@@ -2,7 +2,7 @@
 const { ChatModel } = require("./models");
 const { leftTeam } = require("./services");
 const { getGameEmitter } = require("./events/gameEmitter");
-const { text } = require("stream/consumers");
+
 // const onlineUsers = new Map(); // userId -> socketId
 // Export a single shared instance
 
@@ -35,9 +35,14 @@ function setupServer() {
     });
   });
 
-  ge.on("chat:newMessage", ({ teamId, message }) => {
+  ge.on("chat:sysMessage", ({ teamId, message }) => {
     if (!io) return;
     io.to(teamId).emit("sysMessage", { text: message });
+  });
+
+  ge.on("chat:newMessage", ({ teamId, newMessage }) => {
+    if (!io) return;
+    io.to(teamId).emit("newMessage", newMessage);
   });
 
   ge.on("chat:newExplainer", ({ teamId, explainer, word }) => {
@@ -119,9 +124,11 @@ function setupServer() {
         match: { _id: userId },
         select: "name",
       });
+      newMessage = savedChat.messages[savedChat.messages.length - 1];
 
-      const newMsg = savedChat.messages[savedChat.messages.length - 1];
-      io.to(teamId).emit("newMessage", newMsg);
+      ge.emit("chat:preCheck", { teamId, userId, newMessage });
+
+      // io.to(teamId).emit("newMessage", newMsg);
     });
 
     // Handle disconnect
