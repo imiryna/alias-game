@@ -1,19 +1,24 @@
-# Alias Game
+#  Alias-Game Backend
 
-Alias Game is a **multiplayer word-guessing game** built with **Node.js**.  
-Players try to explain words to their teammates without using the word itself, guessing as many as possible within a time limit.  
-The project includes **real-time chat functionality** and a **feature to check similar words** to ensure fair play.
+###  Overview  
+**Alias-Game Backend** is a **Node.js + Express + Socket.IO** server for a multiplayer word-guessing game inspired by *Alias*.  
+It handles **user authentication**, **game logic**, **team and chat management**, and **real-time gameplay synchronization**.  
+The backend uses **MongoDB** for persistent data storage and **Socket.IO** for real-time communication between players.
 
 ---
 
 ## Tech Stack
 
-**Backend:** Node.js, Express  
-**Database:** MongoDB  
-**Deployment:** Docker  
-**Linting & Formatting:** ESLint, Prettier  
-**Version Control:** Git, GitHub  
-**Task Management:** GitHub Projects
+- **Runtime:** Node.js  
+- **Framework:** Express.js  
+- **Database:** MongoDB + Mongoose  
+- **Real-time:** Socket.IO  
+- **Authentication:** jsonwebtoken
+- **Deployment:** Docker
+- **Linting & Formatting:** ESLint, Prettier  
+- **Version Control:** Git, GitHub  
+- **Task Management:** GitHub Projects 
+- **Other:** Morgan, CORS, dotenv  
 
 ---
 
@@ -27,215 +32,112 @@ The project includes **real-time chat functionality** and a **feature to check s
 
 ---
 
-## Project Setup
+## Project Structure
+
+```
+/controllers      → Request handlers for routes
+/routes           → API route definitions
+/event            → Node.js out of the box EventEmitter
+/services         → Business logic & database operations
+/models           → Mongoose schemas
+/utils            → Helpers (error handling, async wrapper)
+/middlewares      → Validation & authorization middlewares
+socketManager.js  → Socket.IO setup & event handling
+app.js            → Express app configuration
+server.js         → App entry point (HTTP + Socket + MongoDB)
+```
+
+---
+
+## Installation & Setup
 
 ### 1. Clone the repository
 
-```bash
-git clone https://github.com/<your-team-name>/alias-game.git
-cd alias-game
-
+```
+git clone https://github.com/your-username/alias-game-backend.git
+cd alias-game-backend
 ```
 
-### 2. **Copy the example file and update it with your values:**
+### 2. Copy and rename the file `.env.test`
 
-    ```bash
-    cp .env.example .env
-    ```
-
-### 3. **Create and run containers with docker (MongoDB + App)**
-
-    ```bash
-    docker-compose up --build
-    ```
-
----
-
-## Authentication Process (JWT with `jsonwebtoken`)
-
-This API implements authentication using the **`jsonwebtoken`** library.
-The flow is based on **two tokens**:
-
-- **`accessToken`** — short-lived, used to access protected resources.
-- **`refreshToken`** — long-lived, used to renew the `accessToken` after expiration.
-
----
-
-- Tokens are generated using `jsonwebtoken` (`jwt.sign`, `jwt.verify`).
-- `authMiddleware` validates `accessToken` for protected endpoints.
-- Each user record stores its current `refreshToken` in the database.
-- Error handling is unified through the `HttpError` utility and global error middleware.
-- Environment variables:
-
-  - `JWT_ACCESS_SECRET` – secret key for access tokens
-  - `JWT_REFRESH_SECRET` – secret key for refresh tokens
-  - `JWT_ACCESS_EXPIRES` – expiration time for access tokens
-  - `JWT_REFRESH_EXPIRES` – expiration time for refresh tokens
-
----
-
-## Sign Up
-
-Register a new user account.
-
-**Endpoint**
+### 3. Start the server:
 
 ```
-POST /api/auth/signup
+docker-compose up --build
 ```
 
-**Example Request**
+The server will be available at:
 
-```http
-POST /api/auth/signup
-Content-Type: application/json
+http://localhost:3000
 
-{
-  "username": "John Doe",
-  "email": "john@example.com",
-  "password": "mypassword"
-}
-```
+### 4. Connect with a client:
 
-**Example Response**
+Example connection as a client see examples/clientTest.js
 
-```json
-{
-  "message": "Success",
-  "user": {
-    "_id": "6523f81a2f6c1a0a8c42d190",
-    "name": "John Doe",
-    "email": "john@example.com"
-  },
-  "accessToken": "<accessToken>",
-  "refreshToken": "<refreshToken>"
-}
-```
-
-Use the `accessToken` in the `Authorization` header for all protected routes:
+### 5. Start the client:
 
 ```
-Authorization: Bearer <accessToken>
+node clientTest.js <userId> <teamId>
 ```
 
 ---
 
-## Login
+## API Documentation
 
-Authenticate an existing user.
+### **Auth Routes** `/api/auth`
 
-**Endpoint**
-
-```
-POST /api/auth/login
-```
-
-**Example Request**
-
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "mypassword"
-}
-```
-
-**Example Response**
-
-```json
-{
-  "message": "Success",
-  "user": {
-    "_id": "6523f81a2f6c1a0a8c42d190",
-    "name": "John Doe",
-    "email": "john@example.com"
-  },
-  "accessToken": "<accessToken>",
-  "refreshToken": "<refreshToken>"
-}
-```
+| Method | Endpoint   | Description                       |
+|--------|-------------|-----------------------------------|
+| POST   | `/signup`  | Register a new user               |
+| POST   | `/login`   | Log in user and return JWT tokens |
+| POST   | `/refresh` | Refresh access and refresh tokens |
 
 ---
 
-## Access Protected Routes
+### **User Routes** `/api/user`
 
-Every protected endpoint requires a valid JWT token in the header.
-
-**Example Request**
-
-```http
-GET /api/users/profile
-Authorization: Bearer <accessToken>
-```
-
-**Example Response**
-
-```json
-{
-  "message": "Profile fetched successfully",
-  "user": {
-    "_id": "6523f81a2f6c1a0a8c42d190",
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
-}
-```
-
-If the token is missing or invalid, the server responds with:
-
-```json
-{
-  "status": 401,
-  "message": "Unauthorized - Invalid or missing token"
-}
-```
+| Method | Endpoint     | Description                 |
+|--------|--------------|-----------------------------|
+| GET    | `/`          | Get all users               |
+| GET    | `/:id`       | Get a user by ID            |
+| DELETE | `/:id`       | Delete user                 |
 
 ---
 
-## Refresh Access Token
+### **Game Routes** `/api/game`
 
-When the `accessToken` expires, use the `refreshToken` to get a new one.
-
-**Endpoint**
-
-```
-POST /api/auth/refresh
-```
-
-**Example Request**
-
-```http
-POST /api/auth/refresh
-Content-Type: application/json
-
-{
-  "refreshToken": "<refreshToken>"
-}
-```
-
-**Example Response**
-
-```json
-{
-  "accessToken": "<newAccessToken>",
-  "refreshToken": "<refreshToken>"
-}
-```
-
-If the refresh token is invalid or expired:
-
-```json
-{
-  "status": 403,
-  "message": "Invalid or expired refresh token"
-}
-```
+| Method | Endpoint     | Description               |
+|--------|--------------|---------------------------|
+| POST   | `/`          | Create a new game         |
+| GET    | `/`          | Get all games             |
+| GET    | `/:id`       | Get game by ID            |
+| POST   | `/startgame` | Start the game for teams  |
 
 ---
 
-# Socket.IO Integration
+### **Team Routes** `/api/team`
+
+| Method | Endpoint             | Description     |
+|--------|----------------------|---------------  |
+| POST   | `/:teamId/join`      | Join the team   |
+| POST   | `/:teamId/leave`     | Leave the team  |
+| POST   | `/:teamId/next-round`| Next team round |
+| GET    | `/:id`               | Get team by ID  |
+| DELETE | `/:id`               | Delete team     |
+
+---
+
+### **Chat Routes** `/api/chat`
+
+| Method | Endpoint   | Description                               |
+|--------|------------|-------------------------------------------|
+| GET    | `/:teamId` | Get chat history for a team               |
+| POST   | `/:teamId` | Create chat for a team                    |
+| POST   | `/send`    | Send a message to team chat *(protected)* |
+
+---
+
+## Socket.IO Integration
 
 This project uses **Socket.IO** with an **Express** and **MongoDB** backend to enable real-time communication between users.
 
@@ -271,34 +173,154 @@ This project uses **Socket.IO** with an **Express** and **MongoDB** backend to e
    io.to(teamId).emit("newMessage", message);
    ```
 
-## Example Events
+## Socket.IO Events
 
-| Event         | Direction        | Description                              |
-| ------------- | ---------------- | ---------------------------------------- |
-| `joinTeam`    | Client → Server  | User joins a chat room                   |
-| `sendMessage` | Client → Server  | User sends a new message                 |
-| `newMessage`  | Server → Clients | Broadcasts a message to all room members |
-| `userJoined`  | Server → Clients | Notifies when someone connects           |
-| `userOffline` | Server → Clients | Notifies when someone disconnects        |
-
-## Development
-
-Start the server:
-
-```bash
-npm run start:dev
-```
-
-Connect with a client:
-
-Example connection as a client see `examples/clientTest.js`
-
-Start the client:
-
-```
-node clientTest.js <userId> <teamId>
-```
-
-This one will connect user with userId, team chat with teamId.
+| Event           | Direction       | Description                                    |
+|-----------------|-----------------|------------------------------------------------|
+| `joinTeam`      | client → server | Join a specific team room                      |
+| `chatHistory`   | server → client | Send previous messages                         |
+| `sendMessage`   | client → server | Send a new message                             |
+| `newMessage`    | server → client | Broadcast message to all team members          |
+| `userJoined`    | server → client | Notify that a user joined the team             |
+| `userOffline`   | server → client | Notify that a user left the game               |
+| `systemMessage` | server → client | System messages (round end, timer alerts, etc) |
 
 ---
+
+## Developer Notes
+
+- All async routes are wrapped in `catchAsync`.
+- JWT-based authentication with middleware `protected`.
+- MongoDB connection initialized via `server.js`.
+- Socket.io events are managed in `socketManager.js`.
+- Game automatically ends after **10 rounds**, but can also be ended manually with `/api/game/:id/end`.
+
+---
+
+## Node EventEmitter Events
+
+| Event Name         | Direction        | Description                                                                  |
+|--------------------|------------------|------------------------------------------------------------------------------|
+| `updateTeam`       | internal event   | Updates a team document in the database with provided fields.                |
+| `userUpdate`       | internal event   | Updates a user document in the database with new values.                     |
+| `io:connect`       | system event     | Fired when a user connects — stores the user’s socket ID in `onlineUsers`.   |
+| `io:disconnect`    | system event     | Fired when a user disconnects — removes them from `onlineUsers` map.         |
+| `chat:preCheck`    | internal event   | Runs pre-check logic on a new chat message before broadcasting.              |
+| `chat:newMessage`  | emitted event    | Emitted after message validation — triggers sending the processed message.   |
+
+
+## Notes
+
+- All these events are managed inside **`gameEmitter`**, defined in `events/gameEmitter.js` (or similar file in your project).  
+- `gameEmitter` acts as a **singleton**, coordinating internal state updates and communication between different modules (teams, users, chat, sockets).  
+- These events are used **server-side only**, not visible to frontend clients.  
+- Socket.IO events are built **on top** of these internal events to synchronize updates with connected clients.
+
+---
+
+## Docker Setup & Commands
+
+This project includes a Dockerfile and a docker-compose.yml to simplify local development and deployment.
+Three services are defined in docker-compose.yml:
+
+Service	Description	Port
+app	Node.js backend (Alias Game API)	3000
+mongo	MongoDB database	27017
+mongo-express	Web UI for MongoDB	8081
+
+All environment variables are managed via .env.
+
+Create and run containers with docker (MongoDB + App):
+
+---
+
+## FAQ
+
+**1. How does the game start?**  
+After creating a game (POST /api/game) and teams (POST /api/team), call POST /api/game/startgame.
+This initializes the first round, creates team chats (via /api/chat/:teamId), and activates the explainer rotation for each team.
+
+**2. How do players join a team?**  
+Use POST /api/team/:teamId/join.
+The server validates the teamId, adds the player to that team, and connects them to the team’s room in Socket.IO.
+All team members receive a real-time update when someone joins.
+
+**3. What happens when a player leaves a team?**  
+When a player leaves a team using POST /api/logic/:teamId/leave,
+the backend removes the player from that team and emits a playerLeft event (via the internal gameEmitter) to update the game state for other teammates.
+
+**4. How do rounds work?**  
+Each round lasts for a fixed time (e.g. 60 seconds).
+When the timer ends, the server emits a systemMessage that includes:
+- The end of the current round,
+- The next team and explainer who will play,
+- The guessed word or current game status.
+After that, the next round automatically starts with the new explainer and word.
+
+**5. How is the explainer chosen?**  
+Explainers rotate automatically within a team — for each round, the next player becomes the explainer. This ensures balanced participation.
+
+**6. Can I simulate a full game manually (via Postman)?**  
+Yes. Here’s the sequence:
+- 1️⃣ Create a game → POST /api/game
+- 2️⃣ Create two teams → POST /api/team (or via setup logic)
+- 3️⃣ Join players to each team → POST /api/team/:teamId/join
+- 4️⃣ Start the game → POST /api/game/startgame
+- 5️⃣ Send messages (round activity) → Socket event sendMessage or POST /api/chat/send
+
+**7. Does the game end automatically?**  
+Yes — after 10 rounds, the game stops automatically.
+
+**8. How is scoring handled?**  
+Each correct guess adds a point to the team’s score. Points are stored in the Team model and updated at the end of every round.
+
+**9. What happens if the server restarts during the game?**  
+Active games and team states are stored in MongoDB, so they can be restored when the server comes back online.
+
+**10. Is chat history persistent?**  
+Yes — all messages are saved in the `Chat` collection with timestamps and team references.
+
+**11. How to test Socket.IO locally?**  
+You can connect via the Socket.IO client or use Postman’s WebSocket feature.
+Alternatively, you can run the example client — aliasClient_v2.js located in the /examples directory — to test game events and socket interactions locally. 
+
+Example:
+```
+ws://localhost:3000
+```
+Then emit `joinTeam` and `sendMessage` events.
+
+**12. How to handle JWT expiration?**  
+When your access token expires, request a new one via:
+POST /api/auth/refresh
+You must include your refresh token in the request body or header, depending on implementation.
+
+**13. Are all endpoints protected?**  
+Not all — only the key routes require authentication middleware:
+Protected: /api/game, /api/team, /api/user, /api/chat, /api/auth/refresh
+Public: /api/auth/signup, /api/auth/login, /help
+Authentication is handled via the custom protected middleware that verifies JWT.
+
+**14. How are errors returned?**  
+All errors are unified:
+```json
+{
+  "message": "Team not found"
+}
+```
+
+**15. How are chats handled for each team?**
+Each team has its own chat:
+- GET /api/chat/:teamId → get message history
+- POST /api/chat/:teamId → create a new chat for the team
+- POST /api/chat/send → send a message (Socket.IO event is also emitted)
+All chat routes are protected and available only to authenticated users.
+
+**16. Can multiple games run simultaneously?**  
+Yes, each game instance is isolated by its ID and has its own set of teams and chat rooms.
+
+---
+
+## License
+
+MIT © Alias-Game Solvd. Backend Team
