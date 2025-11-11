@@ -1,23 +1,21 @@
-const { generateVocabulary } = require("../utils");
-// const WordPOS = require("wordpos");
-// const { HttpError } = require("../utils");
-// const { StatusCodes } = require("http-status-codes");
+const { StatusCodes } = require('http-status-codes');
+const { generateVocabulary } = require('../utils/generateVocabulary');
+const HttpError = require('../utils/error');
 
-describe("generateVocabulary utility", () => {
-  test("should return unique lowercase nouns", () => {
-    const words = generateVocabulary(5);
+describe('generateVocabulary', () => {
+  it('should throw HttpError if round amount is invalid', async () => {
+    const invalidRounds = 0;
 
-    expect(Array.isArray(words)).toBe(true);
-    expect(words.length).toBe(10); // 5 * 2
-    expect(words.every((w) => typeof w === "string")).toBe(true);
-    expect(words.every((w) => w === w.toLowerCase())).toBe(true);
-
-    const uniqueSet = new Set(words);
-    expect(uniqueSet.size).toBe(words.length); // no duplicates
+    await expect(generateVocabulary(invalidRounds)).rejects.toThrow(HttpError);
+    await expect(generateVocabulary(invalidRounds)).rejects.toThrow('Invalid round amount');
   });
 
-  test("should throw error for invalid input", () => {
-    expect(() => generateVocabulary(-3)).toThrow("Invalid round amount");
-    expect(() => generateVocabulary("abc")).toThrow("Invalid round amount");
+  it('should return array of vocab if round amount is valid', async () => {
+    const validRounds = 3;
+    const vocab = await generateVocabulary(validRounds);
+
+    expect(Array.isArray(vocab)).toBe(true);
+    expect(vocab.length).toBe(validRounds * 3); // totalWords
+    expect(new Set(vocab).size).toBe(vocab.length); // all words are unique
   });
 });

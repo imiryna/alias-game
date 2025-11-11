@@ -1,4 +1,4 @@
-const { getUserById, getAllUsers, increaseUserStats, deleteUser } = require("../services");
+const { getUserById, getAllUsers, increaseUserStats, getUserStats, deleteUser } = require("../services");
 const { catchAsync, HttpError } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
@@ -35,6 +35,26 @@ exports.updatedUserStats = catchAsync(async (req, res) => {
   res.status(StatusCodes.OK).json({
     message: "User stats updated successfully",
     stats: updatedStats,
+  });
+});
+
+/**
+ * Controller to get user statistics.
+ *
+ * @type {(function(*, *, *): void)|*}
+ */
+exports.receiveUserStats = catchAsync(async (req, res) => {
+  const { id } = req.params;
+
+  const stats = await getUserStats(id);
+
+  if (stats === null) {
+    throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
+  }
+
+  res.status(StatusCodes.OK).json({
+    message: "User stats retrieved successfully",
+    stats,
   });
 });
 

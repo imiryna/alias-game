@@ -34,6 +34,22 @@ exports.increaseUserStats = async (id) => {
   return user.stat;
 };
 
+/**
+ * Get user statistics.
+ *
+ * @param id
+ * @returns {Promise<*|null>}
+ */
+exports.getUserStats = async (id) => {
+  const user = await UserModel.findById(id);
+
+  if (!user) {
+    return null;
+  }
+
+  return user.stat;
+};
+
 exports.deleteUser = async (id) => {
   return await UserModel.findByIdAndDelete(id);
 };
