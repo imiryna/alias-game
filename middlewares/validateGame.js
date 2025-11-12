@@ -1,12 +1,4 @@
 const Joi = require("joi");
-// const mongoose = require("mongoose");
-
-// const objectId = (value, helpers) => {
-//   if (!mongoose.Types.ObjectId.isValid(value)) {
-//     return helpers.error("any.invalid");
-//   }
-//   return value;
-// };
 
 exports.createGameSchema = (data) =>
   Joi.object({
@@ -23,5 +15,5 @@ exports.createGameSchema = (data) =>
 
 exports.createTeamIdValidator = (data) =>
   Joi.object({
-    teamId: Joi.string().hex().length(24).required(), // ObjectId из MongoDB
+    teamId: Joi.string().hex().length(24).required(), // ObjectId from MongoDB
   }).validate(data);

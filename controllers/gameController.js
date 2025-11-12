@@ -1,5 +1,5 @@
 const { createGame, getAllGames, getGameById, startGameForTeam, getFreeGamesOrCreateOne } = require("../services");
-const { catchAsync } = require("../utils");
+const { catchAsync } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 
 exports.createGame = catchAsync(async (req, res) => {

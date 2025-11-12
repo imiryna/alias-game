@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { HttpError } = require("../utils");
+const { HttpError } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 
 exports.signToken = (id) => {

@@ -101,12 +101,12 @@ async function chooseTeam() {
     if (again.toLowerCase().startsWith("y")) {
       return chooseTeam();
     } else {
-      console.log("👋 Exiting...");
+      console.log("[*] Exiting...");
       process.exit(0);
     }
   }
 
-  console.log(`✅ Joined team: ${selectedTeam.name}`);
+  console.log(`[*] Joined team: ${selectedTeam.name}`);
   return selectedTeam;
 }
 
@@ -131,7 +131,7 @@ function connectSocket() {
   socket.on("userJoined", (data) => console.log(`[*] ${data.userName} joined.`));
   socket.on("newMessage", (msg) => console.log(`[${msg.user.name}]:> ${msg.text}`));
   socket.on("sysMessage", (msg) => console.log(`[Game]:> ${msg.text}`));
-  socket.on("roundTimerTick", (msg) => console.log(`[*] Time left: ${msg.remaining}`));
+  // socket.on("roundTimerTick", (msg) => console.log(`[*] Time left: ${msg.remaining}`));
   socket.on("roundEnded", (msg) => console.log(`[*] Round #${msg.round.number + 1} ended!`));
 }
 

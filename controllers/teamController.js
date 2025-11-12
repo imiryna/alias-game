@@ -1,5 +1,5 @@
 const { getAllTeams, deleteTeam } = require("../services");
-const { catchAsync } = require("../utils");
+const { catchAsync } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 const { getTeamById } = require("../services");
 
@@ -28,13 +28,3 @@ exports.deleteTeam = catchAsync(async (req, res) => {
     team: deletedTeam,
   });
 });
-
-// exports.chooseNextExplainer = catchAsync(async (req, res) => {
-//   const { teamId } = req.params;
-//   const team = await chooseNextExplainer(teamId);
-
-//   res.status(StatusCodes.OK).json({
-//     message: "Next explainer chosen",
-//     team,
-//   });
-// });

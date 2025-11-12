@@ -1,4 +1,3 @@
-//const { authMiddleware } = require("../middleware");
 const { getChatByTeam, createChatForTeam, sendMessageToTeam } = require("../controllers");
 const express = require("express");
 const router = express.Router();

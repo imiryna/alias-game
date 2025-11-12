@@ -1,7 +1,6 @@
 const EventEmitter = require("node:events");
 
 const { TeamModel, UserModel } = require("../models");
-const { checkingMessageFn } = require("../utils/");
 
 // singleton instance
 class GameEmitter extends EventEmitter {}
@@ -10,12 +9,11 @@ const onlineUsers = new Map(); // userId -> socketId
 
 exports.setupGameLoop = () => {
   gameEmitter.on("updateTeam", async ({ teamId, updateFields }) => {
-    await TeamModel.updateOne({ _id: teamId }, updateFields);
+    await TeamModel.updateOne({ _id: teamId }, { $set: updateFields });
   });
 
-  // TODO
-  gameEmitter.on("userUpdate", async ({ userId, updateFields }) => {
-    UserModel.updateOne({ _id: userId }, { $set: updateFields });
+  gameEmitter.on("updateUser", async ({ userId, updateFields }) => {
+    await UserModel.updateOne({ _id: userId }, { $set: updateFields });
   });
 
   gameEmitter.on("io:connect", ({ userId, socketId }) => onlineUsers.set(userId, socketId));
@@ -27,10 +25,12 @@ exports.setupGameLoop = () => {
     }
   });
 
-  gameEmitter.on("chat:preCheck", async ({ teamId, userId, newMessage }) => {
-    const result = await checkingMessageFn({ teamId, userId, newMessage });
-    newMessage.text = result;
-    gameEmitter.emit("chat:newMessage", { teamId, userId, newMessage }); //
+  gameEmitter.on("chat:preCheck", async ({ teamId, newMessage }) => {
+    const { checkingMessageFn } = require("../services");
+    const messagePool = await checkingMessageFn({ teamId, newMessage });
+    Object.keys(messagePool).forEach((ev) => {
+      gameEmitter.emit(ev, messagePool[ev]);
+    });
   });
 };
 

@@ -1,5 +1,6 @@
 const { createTeamIdValidator } = require("./validateGame");
-const { HttpError, StatusCodes, catchAsync } = require("../utils");
+const { HttpError, catchAsync } = require("../helpers");
+const { StatusCodes } = require("http-status-codes");
 
 exports.validateTeamId = catchAsync(async (req, res, next) => {
   const { error } = createTeamIdValidator(req.params);

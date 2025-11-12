@@ -1,4 +1,4 @@
-const { catchAsync } = require("../utils");
+const { catchAsync } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 const { joinTeam, leftTeam, nextRound } = require("../services");
 

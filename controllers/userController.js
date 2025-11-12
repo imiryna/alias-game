@@ -1,5 +1,5 @@
-const { getUserById, getAllUsers, increaseUserStats, getUserStats, deleteUser } = require("../services");
-const { catchAsync, HttpError } = require("../utils");
+const { getUserById, getAllUsers, getUserStats, deleteUser } = require("../services");
+const { catchAsync, HttpError } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 
 // to get all users
@@ -19,23 +19,6 @@ exports.getUserById = catchAsync(async (req, res) => {
   }
   user.password = undefined;
   res.status(StatusCodes.OK).json(user);
-});
-
-// to update user stats
-exports.updatedUserStats = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const { gamesPlayed, wins } = req.body;
-
-  const updatedStats = await increaseUserStats(id, { gamesPlayed, wins });
-
-  if (!updatedStats) {
-    throw new HttpError(StatusCodes.NOT_FOUND, "User not found");
-  }
-
-  res.status(StatusCodes.OK).json({
-    message: "User stats updated successfully",
-    stats: updatedStats,
-  });
 });
 
 /**

@@ -1,10 +1,7 @@
 // socketManager.js
 const { ChatModel } = require("./models");
 const { leftTeam } = require("./services");
-const { getGameEmitter } = require("./events/gameEmitter");
-
-// const onlineUsers = new Map(); // userId -> socketId
-// Export a single shared instance
+const { getGameEmitter, getOnlineUsers } = require("./events/gameEmitter");
 
 let io;
 
@@ -28,9 +25,9 @@ function setupServer() {
     io.to(teamId).emit("roundTimerTick", { remaining });
   });
 
-  ge.on("chat:newPMMessage", ({ socketId, message }) => {
+  ge.on("chat:newPMMessage", ({ userId, message }) => {
     if (!io) return;
-    io.to(socketId).emit("sysMessage", {
+    io.to(getOnlineUsers()[userId]).emit("sysMessage", {
       text: message,
     });
   });
@@ -40,9 +37,9 @@ function setupServer() {
     io.to(teamId).emit("sysMessage", { text: message });
   });
 
-  ge.on("chat:newMessage", ({ teamId, newMessage }) => {
+  ge.on("chat:newMessage", ({ teamId, message }) => {
     if (!io) return;
-    io.to(teamId).emit("newMessage", newMessage);
+    io.to(teamId).emit("newMessage", message);
   });
 
   ge.on("chat:newExplainer", ({ teamId, explainer, word }) => {
@@ -71,43 +68,17 @@ function setupServer() {
     // User joins a team chat room
     socket.on("joinTeam", async ({ userName, userId, teamId }) => {
       socket.join(teamId);
-      // onlineUsers.set(userId, socket.id);
       ge.emit("io:connect", { userId, socketId: socket.id });
       socket.data.teamId = teamId;
 
       console.log(`>>>>>>>>>>>> User ${userName} joined team ${teamId}`);
       io.to(teamId).emit("userJoined", { userName, online: true });
-
-      // try {
-      //   const chat = await ChatModel.findOne({ team_id: teamId }).populate("messages.user", "name");
-
-      //   if (chat && chat.messages?.length) {
-      //     socket.emit("chatHistory", chat.messages);
-      //     console.log(`>>>>>>>>>>>> Sent chat history to user ${userId} (messages: ${chat.messages.length})`);
-      //   } else {
-      //     socket.emit("chatHistory", []);
-      //     console.log(`>>>>>>>>>>>> No chat history for team ${teamId}`);
-      //   }
-      // } catch (error) {
-      //   console.error("Error sending chat history:", error);
-      // }
     });
 
     // Receive a new message
     socket.on("sendMessage", async ({ teamId, userId, text }) => {
       const chat = await ChatModel.findOne({ team_id: teamId });
       if (!chat) return;
-
-      // const wordCount = text.trim().split(/\s+/).length;
-      // const isExplainer = String(userId) === String(team.currentExplainer);
-
-      // if (!isExplainer && wordCount > 1) {
-      //   io.to(teamId).emit("systemMessage", {
-      //     message: "Only the explainer can send messages with more than one word.",
-      //   });
-
-      //   return;
-      // }
 
       let newMessage = {
         user: userId,
@@ -127,8 +98,6 @@ function setupServer() {
       newMessage = savedChat.messages[savedChat.messages.length - 1];
 
       ge.emit("chat:preCheck", { teamId, userId, newMessage });
-
-      // io.to(teamId).emit("newMessage", newMsg);
     });
 
     // Handle disconnect

@@ -24,7 +24,6 @@ app.get("/help", async (req, res) => {
   return res.status(200).json({ message: "Hello" });
 });
 
-//app.use("/api", routerApi);
 app.use("/api/user", userRoutes);
 app.use("/api/game", gameRoutes);
 app.use("/api/team", teamRoutes);

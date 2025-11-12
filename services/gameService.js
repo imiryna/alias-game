@@ -1,12 +1,13 @@
 const { GameModel } = require("../models");
 const { createTeam, getTeamByIdForRound } = require("./teamService");
 const { createChatForTeam } = require("./chatService");
-const { HttpError, generateVocabulary } = require("../utils");
+const { generateVocabulary } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const { getOnlineUsers } = require("../events/gameEmitter"); // websocket users map
 const { nextRound } = require("./logicGameService");
 const { generateSlug } = require("random-word-slugs");
 const { getGameEmitter } = require("../events/gameEmitter");
+const { HttpError } = require("../helpers");
 
 // to get all games
 exports.getAllGames = async () => {

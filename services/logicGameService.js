@@ -1,8 +1,10 @@
-const { HttpError, getNextExplainer, pickRandomWord, TEAM_STATUS } = require("../utils");
+const { HttpError, getNextExplainer, pickRandomWord } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 const gameService = require("./gameService");
 const { getTeamById, getTeamByIdForRound } = require("./teamService");
 const { getGameEmitter, getOnlineUsers } = require("../events/gameEmitter");
+
+const { TEAM_STATUS } = require("../models");
 
 const { setInterval } = require("timers/promises");
 
@@ -11,6 +13,7 @@ const gameOver = async (teamModel) => {
   teamModel.currentRound.number = 0;
   teamModel.status = TEAM_STATUS.ENDED;
   teamModel.player_list = [];
+  teamModel.currentRound.is_active = false;
   await teamModel.save();
 
   const ge = getGameEmitter();
@@ -59,7 +62,7 @@ exports.leftTeam = async (teamId, userId, socketId = null) => {
 
   const team = await getTeamById(teamId);
   if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team is not exist");
-
+  console.log(`team.player_list.leftTeam ${team.player_list}`);
   team.player_list = team.player_list.filter((pl) => pl._id.toString() !== userId);
   await team.save();
 
@@ -85,6 +88,23 @@ const nextWord = async (team) => {
   return { nextExplainer, _nextWord };
 };
 
+exports.switchExplainer = async (team) => {
+  const ge = getGameEmitter();
+  let a = await nextWord(team);
+
+  const socketId = getOnlineUsers().get(a.nextExplainer._id.toString());
+  ge.emit("chat:newExplainer", { teamId: team._id.toString(), explainer: socketId, word: a._nextWord });
+
+  const updateFields = {
+    currentRound: {
+      is_active: true,
+      current_word: a._nextWord,
+    },
+    currentExplainer: a.nextExplainer,
+  };
+  ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
+};
+
 const innerNextRound = async (teamId) => {
   const team = await getTeamByIdForRound(teamId);
   const currentRound = team.currentRound.number;
@@ -94,24 +114,17 @@ const innerNextRound = async (teamId) => {
     throw new HttpError(StatusCodes.NOT_FOUND, "No players in team");
   }
 
-  let a = await nextWord(team);
-
-  const socketId = getOnlineUsers().get(a.nextExplainer._id.toString());
-  ge.emit("chat:newExplainer", { teamId: team._id.toString(), explainer: socketId, word: a._nextWord });
-
   // Check if rounds off - game over
-  if (currentRound <= 3) {
-    //team.game.settings.round_amount) {
+  if (currentRound <= team.game.settings.round_amount) {
+    await this.switchExplainer(team);
+
     timerTick(team);
 
     const newRoundNumber = team.currentRound.number + 1;
     const updateFields = {
       currentRound: {
         number: newRoundNumber,
-        isActive: true,
-        current_word: a._nextWord,
       },
-      currentExplainer: a.nextExplainer,
     };
     ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
   } else {
@@ -121,11 +134,10 @@ const innerNextRound = async (teamId) => {
 };
 
 const timerTick = (team) => {
-  // const io = getIO();
   const ge = getGameEmitter();
   const teamId = team._id.toString();
-  // TODO remove hardcode
-  let roundTime = 5; //team.game.settings.round_time;
+
+  let roundTime = team.game.settings.round_time;
 
   const interval = 1000; // 1 second
 
@@ -140,18 +152,9 @@ const timerTick = (team) => {
         innerNextRound(team);
         break;
       }
-      //TODO uncomment
-      //ge.emit("updateTeam", { teamId: teamId, updateFields: { currentRound: { isActive: false } } });
     }
   })();
   return interval;
 };
-
-// const gameOver = async (teamModel) => {
-//   teamModel.team_score = 0;
-//   teamModel.status = TEAM_STATUS.ENDED;
-//   teamModel.player_list = [];
-//   await teamModel.save();
-// };
 
 exports.nextRound = async (teamId) => innerNextRound(teamId);

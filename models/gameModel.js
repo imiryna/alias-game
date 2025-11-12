@@ -1,4 +1,5 @@
 const { model, Schema } = require("mongoose");
+const { GAME_STATUS } = require("./constants");
 
 const gameSchema = new Schema(
   {
@@ -40,8 +41,8 @@ const gameSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["waiting", "active", "ended"], //all possible states
-      default: "waiting",
+      enum: GAME_STATUS, //all possible states
+      default: GAME_STATUS.WAITING,
     },
   },
   { timestamps: true }
