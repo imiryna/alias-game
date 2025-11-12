@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const { generateVocabulary } = require('../utils/generateVocabulary');
-const HttpError = require('../utils/error');
+const HttpError = require('../helpers/error');
 
 describe('generateVocabulary', () => {
   it('should throw HttpError if round amount is invalid', async () => {

@@ -1,4 +1,4 @@
-const { HttpError } = require("../helpers/error");
+const { HttpError } = require("../helpers");
 const { StatusCodes } = require("http-status-codes");
 
 /**
