@@ -11,7 +11,7 @@ const { HttpError } = require("../helpers");
 
 // to get all games
 exports.getAllGames = async () => {
-  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list isFull");
+  return await GameModel.find().populate("admin", "username email").populate("teams", "name team_score player_list isFull").exec();
 };
 
 // to get a game by id

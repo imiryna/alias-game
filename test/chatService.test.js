@@ -1,111 +1,108 @@
-const { createNewMessage } = require("../services");
-const { ChatModel, TeamModel } = require("../models");
-const { getIO } = require("../socketManager");
+const { checkingMessageFn } = require("../services/chatService");
+const { TeamModel} = require("../models");
+const { getUserById } = require("../services/userService");
+const { switchExplainer } = require("../services/logicGameService");
 const { isWordTooSimilar, checkGuess } = require("../utils");
+const { HttpError } = require("../helpers");
 
 jest.mock("../models", () => ({
-  ChatModel: { findOne: jest.fn() },
-  TeamModel: { findById: jest.fn() },
+  TeamModel: {findById: jest.fn()},
 }));
-jest.mock("../socketManager", () => ({
-  getIO: jest.fn(),
+
+jest.mock("../services/userService", () => ({
+  getUserById: jest.fn(),
 }));
+
+jest.mock("../services/logicGameService", () => ({
+  switchExplainer: jest.fn(),
+}));
+
 jest.mock("../utils", () => ({
   isWordTooSimilar: jest.fn(),
   checkGuess: jest.fn(),
 }));
 
-describe("createNewMessage", () => {
-  let ioEmitMock;
-  let mockChat;
+describe("checkingMessageFn", () => {
   let mockTeam;
+  let mockUser;
 
   beforeEach(() => {
-      ioEmitMock = jest.fn().mockReturnValue({ emit: jest.fn() });
-      getIO.mockReturnValue({ to: jest.fn(() => ({ emit: ioEmitMock })) });
+    jest.clearAllMocks();
 
-  mockChat = {
-      messages: [],
-      save: jest.fn().mockResolvedValue(true),
-  };
-  mockTeam = {
-    currentExplainer: "explainer123",
-    currentRound: {
-      is_active: true,
-      current_word: "apple",
-    },
-    team_score: 0,
-    save: jest.fn(),
-  };
+    mockTeam = {
+      currentExplainer: "explainer123",
+      currentRound: {is_active: true, current_word: "apple"},
+      team_score: 0,
+    };
 
-  ChatModel.findOne.mockResolvedValue(mockChat);
-  TeamModel.findById.mockResolvedValue(mockTeam);
+    mockUser = {
+      _id: "user456",
+      name: "Player",
+      stat: 0,
+    };
 
-  jest.clearAllMocks();
-  });
-
-  test("throws if chat not found", async () => {
-    ChatModel.findOne.mockResolvedValue(null);
-
-    await expect(
-      createNewMessage({ userId: "u1", teamId: "t1", message: "hi" })
-    ).rejects.toThrow("Chat not found");
+    TeamModel.findById.mockResolvedValue(mockTeam);
+    getUserById.mockResolvedValue(mockUser);
   });
 
   test("throws if team not found", async () => {
     TeamModel.findById.mockResolvedValue(null);
 
     await expect(
-      createNewMessage({ userId: "u1", teamId: "t1", message: "hi" })
-    ).rejects.toThrow("Team not found");
+      checkingMessageFn({teamId: "t1", newMessage: {user: mockUser, text: "hi"}})
+    ).rejects.toThrow(HttpError);
   });
 
-  test("emits systemMessage if explainer sends a too-similar word", async () => {
+  test("emits system message if explainer sends a too-similar word", async () => {
     isWordTooSimilar.mockReturnValue(true);
 
-    await createNewMessage({
-      userId: "explainer123",
+    const messagePool = await checkingMessageFn({
       teamId: "t1",
-      message: "apples",
+      newMessage: {user: {_id: "explainer123"}, text: "apples"},
     });
 
-    expect(ioEmitMock).toHaveBeenCalledWith("systemMessage", {
+    expect(messagePool["chat:newPMMessage"]).toEqual({
+      userId: "explainer123",
       message: "Your message is too similar to the word to guess!",
     });
-    expect(mockChat.save).not.toHaveBeenCalled();
   });
 
-  test("emits correctGuess and updates team if non-explainer guesses correctly", async () => {
+  test("updates team and emits correct guess if non-explainer guesses correctly", async () => {
     isWordTooSimilar.mockReturnValue(false);
     checkGuess.mockReturnValue(true);
 
-    await createNewMessage({
-      userId: "user456",
+    const messagePool = await checkingMessageFn({
       teamId: "t1",
-      message: "apple",
+      newMessage: {user: {_id: "user456", name: "Player", stat: 0}, text: "apple"},
     });
 
-    expect(ioEmitMock).toHaveBeenCalledWith("correctGuess", {
-      message: "User guessed the word: apple",
+    expect(messagePool["updateUser"]).toEqual({
       userId: "user456",
+      updateFields: {stat: 1},
     });
-    expect(mockTeam.team_score).toBe(1);
-    expect(mockTeam.currentRound.is_active).toBe(false);
-    expect(mockTeam.save).toHaveBeenCalled();
+    expect(messagePool["chat:sysMessage"]).toEqual({
+      teamId: "t1",
+      message: "Player guessed the word: apple",
+    });
+    expect(messagePool["updateTeam"]).toEqual({
+      teamId: "t1",
+      updateFields: {team_score: 1},
+    });
+    expect(switchExplainer).toHaveBeenCalled();
   });
 
-  test("saves and emits normal message when nothing special happens", async () => {
+  test("returns normal message if nothing special happens", async () => {
     isWordTooSimilar.mockReturnValue(false);
     checkGuess.mockReturnValue(false);
 
-    await createNewMessage({
-      userId: "explainer123",
+    const messagePool = await checkingMessageFn({
       teamId: "t1",
-      message: "some hint",
+      newMessage: {user: {_id: "explainer123"}, text: "some hint"},
     });
 
-    expect(mockChat.messages).toHaveLength(1);
-    expect(mockChat.save).toHaveBeenCalled();
-    expect(ioEmitMock).toHaveBeenCalledWith("newMessage", expect.any(Object));
+    expect(messagePool["chat:newMessage"]).toEqual({
+      teamId: "t1",
+      message: {user: {_id: "explainer123"}, text: "some hint"},
+    });
   });
 });

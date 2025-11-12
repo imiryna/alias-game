@@ -1,48 +1,44 @@
-require("dotenv").config();
 const mongoose = require("mongoose");
-const Team = require("../models");
 const { getNextExplainer } = require("../utils");
 
-beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-});
-
-afterAll(async () => {
-  await mongoose.connection.close();
-});
-
-describe("Round Robin simulation", () => {
+describe("Round Robin simulation with mocks", () => {
   let team;
 
-  beforeEach(async () => {
-    await Team.deleteMany({ name: "Test Team" });
-
-    team = await Team.create({
+  beforeEach(() => {
+    team = {
       name: "Test Team",
-      player_list: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()],
+      player_list: [
+        { _id: new mongoose.Types.ObjectId() },
+        { _id: new mongoose.Types.ObjectId() },
+        { _id: new mongoose.Types.ObjectId() },
+      ],
       currentExplainerIndex: -1,
-    });
+      currentExplainer: null,
+      save: jest.fn().mockResolvedValue(true),
+    };
   });
 
   test("should rotate explainers correctly", async () => {
     const rounds = 6;
 
     for (let i = 0; i < rounds; i++) {
-      const { nextIndex, nextExplainer } = getNextExplainer(team.player_list, team.currentExplainerIndex);
+      const nextExplainer = getNextExplainer(
+        team.player_list,
+        team.currentExplainer
+      );
 
       expect(nextExplainer).toBeDefined();
-      expect(typeof nextIndex).toBe("number");
 
-      team.currentExplainer = nextExplainer._id || nextExplainer;
-      team.currentExplainerIndex = nextIndex;
+      team.currentExplainer = nextExplainer; // сохраняем объект целиком
+      team.currentExplainerIndex = team.player_list.indexOf(nextExplainer);
 
       await team.save();
     }
 
     expect(team.currentExplainerIndex).toBeLessThan(team.player_list.length);
-    expect(team.currentExplainer.toString()).toEqual(team.player_list[team.currentExplainerIndex].toString());
+    expect(team.currentExplainer._id.toString()).toEqual(
+      team.player_list[team.currentExplainerIndex]._id.toString()
+    );
+    expect(team.save).toHaveBeenCalledTimes(rounds);
   });
 });

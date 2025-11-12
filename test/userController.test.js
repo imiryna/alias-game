@@ -1,57 +1,94 @@
-// const { StatusCodes } = require("http-status-codes");
-// const { updatedUserStats, receiveUserStats } = require("../controllers");
-// // const {increaseUserStats, getUserStats} = require('../services');
+const userController = require("../controllers/userController");
+const authController = require("../controllers/authController");
+const {
+  getUserById,
+  getAllUsers,
+  deleteUser,
+  signup,
+  login,
+  refresh,
+} = require("../services");
+const {StatusCodes} = require("http-status-codes");
 
-// jest.mock("../services/userService");
+jest.mock("../services");
 
-// describe("User Stats", () => {
-//   afterEach(() => {
-//     jest.clearAllMocks();
-//   });
+describe("User + Auth Controllers (unit tests)", () => {
+  let mockUser;
+  let req, res, next;
 
-//   describe("updatedUserStats", () => {
-//     it("should return updated stats if user exists", async () => {
-//       const mockStats = { gamesPlayed: 1, wins: 0 };
-//       increaseUserStats.mockResolvedValue(mockStats);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUser = {id: "1", name: "Test User", email: "test@test.com", password: "hashed"};
 
-//       const req = { params: { id: "123" }, body: { gamesPlayed: 1, wins: 0 } };
-//       const res = {
-//         status: jest.fn().mockReturnThis(),
-//         json: jest.fn(),
-//       };
-//       const next = jest.fn();
+    req = {body: {}, params: {}};
+    res = {status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis()};
+    next = jest.fn();
+  });
 
-//       await updatedUserStats(req, res, next);
+  // ----- AuthController -----
+  test("signup should create a user", async () => {
+    signup.mockResolvedValue(mockUser);
+    req.body = {name: "Test User", email: "test@test.com", password: "123456"};
 
-//       expect(res.status).toHaveBeenCalledWith(StatusCodes.OK);
-//       expect(res.json).toHaveBeenCalledWith({
-//         message: "User stats updated successfully",
-//         stats: mockStats,
-//       });
-//       expect(next).not.toHaveBeenCalled();
-//     });
-//   });
+    await authController.signup(req, res, next);
 
-//   describe("receiveUserStats", () => {
-//     it("should return stats if user exists", async () => {
-//       const mockStats = { stat: 5 };
-//       getUserStats.mockResolvedValue(mockStats);
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.CREATED);
+    expect(res.json).toHaveBeenCalledWith({message: "Success", user: mockUser});
+  });
 
-//       const req = { params: { id: "123" } };
-//       const res = {
-//         status: jest.fn().mockReturnThis(),
-//         json: jest.fn(),
-//       };
-//       const next = jest.fn();
+  test("login should return user", async () => {
+    login.mockResolvedValue(mockUser);
+    req.body = {email: "test@test.com", password: "123456"};
 
-//       await receiveUserStats(req, res, next);
+    await authController.login(req, res, next);
 
-//       expect(res.status).toHaveBeenCalledWith(StatusCodes.OK);
-//       expect(res.json).toHaveBeenCalledWith({
-//         message: "User stats retrieved successfully",
-//         stats: mockStats,
-//       });
-//       expect(next).not.toHaveBeenCalled();
-//     });
-//   });
-// });
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.CREATED);
+    expect(res.json).toHaveBeenCalledWith({message: "Success", user: mockUser});
+  });
+
+  test("refresh should return tokens", async () => {
+    const tokens = {accessToken: "newAccess", refreshToken: "newRefresh"};
+    refresh.mockResolvedValue(tokens);
+    req.body = {token: "oldRefresh"};
+
+    await authController.refresh(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.OK);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Token refreshed",
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  });
+
+  // ----- UserController -----
+  test("getAllUsers should return users without passwords", async () => {
+    getAllUsers.mockResolvedValue([mockUser]);
+
+    await userController.getAllUsers(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.OK);
+    expect(res.json).toHaveBeenCalledWith([{...mockUser, password: undefined}]);
+  });
+
+
+  test("getUserById should return user without password", async () => {
+    getUserById.mockResolvedValue(mockUser);
+    req.params.id = "1";
+
+    await userController.getUserById(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.OK);
+    expect(res.json).toHaveBeenCalledWith({...mockUser, password: undefined});
+  });
+
+  test("deleteUser should return success if user found", async () => {
+    deleteUser.mockResolvedValue(mockUser);
+    req.params.id = "1";
+
+    await userController.deleteUser(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.OK);
+    expect(res.json).toHaveBeenCalledWith({message: "Success"});
+  });
+});

@@ -1,5 +1,10 @@
-// Get the next explainer in a round-robin fashion from the list of players.
-
+/**
+ * Get the next explainer in a round-robin fashion
+ *
+ * @param players
+ * @param currentExplainer
+ * @returns {*}
+ */
 exports.getNextExplainer = (players, currentExplainer) => {
   let explainer = null;
   let explainerIndex = null;
