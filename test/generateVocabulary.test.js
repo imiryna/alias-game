@@ -1,16 +1,15 @@
-const { StatusCodes } = require('http-status-codes');
-const { generateVocabulary } = require('../utils/generateVocabulary');
-const HttpError = require('../helpers/error');
+const { generateVocabulary } = require("../utils/generateVocabulary");
+const HttpError = require("../helpers/error");
 
-describe('generateVocabulary', () => {
-  it('should throw HttpError if round amount is invalid', async () => {
+describe("generateVocabulary", () => {
+  it("should throw HttpError if round amount is invalid", async () => {
     const invalidRounds = 0;
 
     await expect(generateVocabulary(invalidRounds)).rejects.toThrow(HttpError);
-    await expect(generateVocabulary(invalidRounds)).rejects.toThrow('Invalid round amount');
+    await expect(generateVocabulary(invalidRounds)).rejects.toThrow("Invalid round amount");
   });
 
-  it('should return array of vocab if round amount is valid', async () => {
+  it("should return array of vocab if round amount is valid", async () => {
     const validRounds = 3;
     const vocab = await generateVocabulary(validRounds);
 

@@ -9,6 +9,7 @@ const onlineUsers = new Map(); // userId -> socketId
 
 exports.setupGameLoop = () => {
   gameEmitter.on("updateTeam", async ({ teamId, updateFields }) => {
+    console.log(`update team with ${JSON.stringify(updateFields)}`);
     await TeamModel.updateOne({ _id: teamId }, { $set: updateFields });
   });
 

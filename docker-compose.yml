@@ -17,7 +17,7 @@ services:
     build: .
     image: alias-app
     ports:
-      - "3000:3000"
+      - "3000:3000" # your API
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules

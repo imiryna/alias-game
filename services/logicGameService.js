@@ -11,6 +11,7 @@ const { setInterval } = require("timers/promises");
 const gameOver = async (teamModel) => {
   teamModel.team_score = 0;
   teamModel.currentRound.number = 0;
+  teamModel.currentRound.current_word = "";
   teamModel.status = TEAM_STATUS.ENDED;
   teamModel.player_list = [];
   teamModel.currentRound.is_active = false;
@@ -62,7 +63,12 @@ exports.leftTeam = async (teamId, userId, socketId = null) => {
 
   const team = await getTeamById(teamId);
   if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team is not exist");
-  console.log(`team.player_list.leftTeam ${team.player_list}`);
+  // console.log(`team.player_list.leftTeam ${team.player_list}`);
+  // console.log(userId);
+  team.player_list.forEach((p) => {
+    console.log(p._id.toString());
+    console.log(p._id.toString() !== userId);
+  });
   team.player_list = team.player_list.filter((pl) => pl._id.toString() !== userId);
   await team.save();
 
@@ -96,10 +102,9 @@ exports.switchExplainer = async (team) => {
   ge.emit("chat:newExplainer", { teamId: team._id.toString(), explainer: socketId, word: a._nextWord });
 
   const updateFields = {
-    currentRound: {
-      is_active: true,
-      current_word: a._nextWord,
-    },
+    "currentRound.is_active": true,
+    "currentRound.current_word": a._nextWord,
+    //number: team.currentRound.number,
     currentExplainer: a.nextExplainer,
   };
   ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
@@ -108,23 +113,23 @@ exports.switchExplainer = async (team) => {
 const innerNextRound = async (teamId) => {
   const team = await getTeamByIdForRound(teamId);
   const currentRound = team.currentRound.number;
-
+  const amountOfRounds = team.game.settings.round_amount;
   const ge = getGameEmitter();
   if (!Array.isArray(team.player_list) || team.player_list.length === 0) {
     throw new HttpError(StatusCodes.NOT_FOUND, "No players in team");
   }
 
   // Check if rounds off - game over
-  if (currentRound <= team.game.settings.round_amount) {
+
+  if (currentRound < amountOfRounds) {
     await this.switchExplainer(team);
 
     timerTick(team);
 
     const newRoundNumber = team.currentRound.number + 1;
     const updateFields = {
-      currentRound: {
-        number: newRoundNumber,
-      },
+      "currentRound.is_active": true,
+      "currentRound.number": newRoundNumber,
     };
     ge.emit("updateTeam", { teamId: team._id.toString(), updateFields });
   } else {
@@ -144,7 +149,7 @@ const timerTick = (team) => {
   (async function () {
     for await (const step of setInterval(interval, Date.now())) {
       console.log(step);
-
+      console.log(roundTime);
       ge.emit("team:roundTimerTick", { teamId, remaining: roundTime });
       roundTime -= 1;
       if (roundTime <= 0) {

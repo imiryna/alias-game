@@ -49,12 +49,14 @@ exports.checkingMessageFn = async ({ teamId, newMessage }) => {
   const team = await TeamModel.findById(teamId);
   const user = newMessage.user;
   const userId = user._id.toString();
-  console.log(String(userId));
+  console.log(`USER: ${String(userId)}`);
   if (!team) throw new HttpError(StatusCodes.NOT_FOUND, "Team not found");
 
   const { currentExplainer, currentRound } = team;
-  console.log(String(currentExplainer));
-  console.log(currentRound);
+  console.log(`EXP: ${String(currentExplainer)}`);
+  console.log("===============");
+  console.log(`CUR: ${currentRound}`);
+
   // if game is already started
   if (currentRound?.is_active && currentRound?.current_word) {
     // if message author is explainer
@@ -71,6 +73,8 @@ exports.checkingMessageFn = async ({ teamId, newMessage }) => {
         };
       }
     } else {
+      console.log(newMessage.text);
+      console.log("===============");
       // if the message author not explainer, he guess the words
       const isCorrect = checkGuess(newMessage.text, currentRound.current_word);
       if (isCorrect) {
@@ -88,7 +92,7 @@ exports.checkingMessageFn = async ({ teamId, newMessage }) => {
           teamId: teamId,
           updateFields: { team_score: team.team_score + 1 },
         };
-        switchExplainer(team);
+        await switchExplainer(team);
       }
     }
   }
