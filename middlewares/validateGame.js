@@ -8,8 +8,9 @@ exports.createGameSchema = (data) =>
     }),
 
     settings: Joi.object({
-      round_time: Joi.number().integer().min(10).max(300).default(60),
-      word_amount: Joi.number().integer().min(1).max(100).default(10),
+      round_time: Joi.number().integer().min(10).max(100).default(60),
+      word_amount: Joi.number().integer().min(1).max(50).default(10),
+      round_amount: Joi.number().integer().min(5).max(10).default(10),
     }).default(),
   }).validate(data, { abortEarly: false });
 
