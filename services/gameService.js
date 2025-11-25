@@ -63,6 +63,9 @@ exports.createGame = async ({ name, settings = {} }) => {
 
   team1.game = game._id;
   team2.game = game._id;
+
+  team1.word_vocabulary = vocabulary;
+  team2.word_vocabulary = vocabulary;
   await team1.save();
   await team2.save();
 
